@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property name="instance" value="oa"/>
+    <!-- 日志存放路径 -->
+    <property name="log.path" value="../logs/oa/"/>
+    <!-- 日志输出格式 -->
+    <property name="log.pattern"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{20} - [%method,%line] - %msg%n"/>
+
+    <!-- 控制台输出 -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 系统日志输出 -->
+    <appender name="file_info" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.path}/${instance}-info.log</file>
+        <!-- 循环政策：基于时间创建日志文件 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 日志文件名格式 -->
+            <fileNamePattern>${log.path}/${instance}-info.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 日志最大的历史 60天 -->
+            <maxHistory>60</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <!--TRACE, DEBUG, INFO, WARN, ERROR, ALL 和 OFF-->
+            <level>INFO</level>
+        </filter>
+    </appender>
+
+    <appender name="async_file_info" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="file_info"/>
+        <discardingThreshold>20</discardingThreshold>
+        <queueSize>1024</queueSize>
+    </appender>
+
+    <appender name="file_warn" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.path}/${instance}-warn.log</file>
+        <!-- 循环政策：基于时间创建日志文件 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 日志文件名格式 -->
+            <fileNamePattern>${log.path}/${instance}-warn.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 日志最大的历史 60天 -->
+            <maxHistory>60</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+    </appender>
+
+    <appender name="async_file_warn" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="file_warn"/>
+        <discardingThreshold>20</discardingThreshold>
+        <queueSize>1024</queueSize>
+    </appender>
+
+    <appender name="file_error" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.path}/${instance}-error.log</file>
+        <!-- 循环政策：基于时间创建日志文件 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 日志文件名格式 -->
+            <fileNamePattern>${log.path}/${instance}-error.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 日志最大的历史 60天 -->
+            <maxHistory>60</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <!-- 过滤的级别 -->
+            <level>ERROR</level>
+            <!-- 匹配时的操作：接收（记录） -->
+            <onMatch>ACCEPT</onMatch>
+            <!-- 不匹配时的操作：拒绝（不记录） -->
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <appender name="async_file_error" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="file_error"/>
+        <discardingThreshold>20</discardingThreshold>
+        <queueSize>1024</queueSize>
+    </appender>
+
+    <!-- 用户访问日志输出  -->
+    <appender name="file_operate" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.path}/${instance}-operate.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 按天回滚 daily -->
+            <fileNamePattern>${log.path}/${instance}-operate.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 日志最大的历史 60天 -->
+            <maxHistory>60</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="async_file_operate" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="file_operate"/>
+        <discardingThreshold>20</discardingThreshold>
+        <queueSize>1024</queueSize>
+    </appender>
+
+    <!-- 系统模块日志级别控制  -->
+    <logger name="com.oa" level="info"/>
+    <!-- Spring日志级别控制  -->
+    <logger name="org.springframework" level="warn"/>
+
+    <!--系统操作日志-->
+    <root level="info">
+        <appender-ref ref="console"/>
+        <appender-ref ref="async_file_info"/>
+        <appender-ref ref="async_file_warn"/>
+        <appender-ref ref="async_file_error"/>
+    </root>
+
+    <!--系统用户操作日志-->
+    <logger name="file_operate_log" level="info">
+        <appender-ref ref="async_file_operate"/>
+    </logger>
+</configuration> 

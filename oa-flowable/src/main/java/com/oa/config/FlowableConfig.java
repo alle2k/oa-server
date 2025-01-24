@@ -3,9 +3,7 @@ package com.oa.config;
 import com.oa.listener.ProcessInstanceStatusListener;
 import org.flowable.engine.ProcessEngine;
 import org.flowable.engine.ProcessEngineConfiguration;
-import org.flowable.engine.RuntimeService;
 import org.flowable.spring.SpringProcessEngineConfiguration;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -32,13 +30,7 @@ public class FlowableConfig {
         configuration.setActivityFontName("宋体");
         configuration.setAnnotationFontName("宋体");
         configuration.setLabelFontName("宋体");
+        configuration.getEventListeners().add(processInstanceStatusListener);
         return configuration.buildProcessEngine();
-    }
-
-    @Bean("runtimeService")
-    public RuntimeService runtimeService(@Qualifier("processEngine") ProcessEngine processEngine) {
-        RuntimeService runtimeService = processEngine.getRuntimeService();
-        runtimeService.addEventListener(processInstanceStatusListener);
-        return runtimeService;
     }
 }

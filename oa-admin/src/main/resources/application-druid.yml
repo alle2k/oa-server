@@ -6,15 +6,15 @@ spring:
         druid:
             # 主库数据源
             master:
-                url: jdbc:mysql://zhaokai.xyz:3306/oa?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+                url: jdbc:mysql://zhaokai.xyz:3306/oa_core?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
                 username: root
-                password: jDXMmGDtTSmNRHkh
+                password: 7a14b92569085afd
             # 从库数据源
             flowable:
                 # 从数据源开关/默认关闭
                 url: jdbc:mysql://zhaokai.xyz:3306/oa_flowable?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&nullCatalogMeansCurrent=true
                 username: root
-                password: jDXMmGDtTSmNRHkh
+                password: 7a14b92569085afd
             # 初始连接数
             initialSize: 5
             # 最小连接池数量

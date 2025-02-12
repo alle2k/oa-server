@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oa.core.mapper.master.BusinessOrderMapper">
+
+    <resultMap type="businessOrder" id="businessOrderResultMap">
+        <id property="id" column="id"/>
+        <result property="auditNo" column="audit_no"/>
+        <result property="paymentTime" column="payment_time"/>
+        <result property="companyName" column="company_name"/>
+        <result property="companyContactUserName" column="company_contact_user_name"/>
+        <result property="companyContactUserTel" column="company_contact_user_tel"/>
+        <result property="amount" column="amount"/>
+        <result property="performance" column="performance"/>
+        <result property="annexUrl" column="annex_url"/>
+        <result property="paymentScreenshot" column="payment_screenshot"/>
+        <result property="approvalStatus" column="approval_status"/>
+        <result property="approvalTime" column="approval_time"/>
+        <result property="remark" column="remark"/>
+        <result property="deleted" column="deleted"/>
+        <result property="createUser" column="create_user"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateUser" column="update_user"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="baseColumn">
+        id
+        ,audit_no,company_name, company_contact_user_name,company_contact_user_tel,amount,performance,remark,annex_url,payment_screenshot,approval_status,approval_time,deleted,create_user,create_time,update_user,update_time
+    </sql>
+</mapper>

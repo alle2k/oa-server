@@ -1,6 +1,5 @@
 package com.oa.core.model.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import javax.validation.constraints.Min;
@@ -17,7 +16,6 @@ public class BusinessOrderSaveDto {
     /**
      * 付款时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @NotNull
     private Date paymentTime;
 

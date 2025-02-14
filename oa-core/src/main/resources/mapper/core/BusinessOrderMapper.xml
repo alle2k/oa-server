@@ -27,6 +27,27 @@
 
     <sql id="baseColumn">
         id
-        ,audit_no,company_name, company_contact_user_name,company_contact_user_tel,amount,performance,remark,annex_url,payment_screenshot,approval_status,approval_time,deleted,create_user,create_time,update_user,update_time
+        , audit_no, payment_time, company_name, company_contact_user_name, company_contact_user_tel, amount, performance, remark, annex_url, payment_screenshot, approval_status, approval_time, deleted, create_user, create_time, update_user, update_time
     </sql>
+
+    <select id="pageQuery" resultMap="businessOrderResultMap">
+        select <include refid="baseColumn"/>
+        from business_order
+        <where>
+            <if test="null != param.auditNo and param.auditNo != ''">
+                and audit_no = #{param.auditNo}
+            </if>
+            <if test="null != param.createUser">
+                and create_user = #{param.createUser}
+            </if>
+            <if test="null != param.approvalStatus">
+                and approval_status = #{param.approvalStatus}
+            </if>
+            <if test="null != param.companyName and param.companyName != ''">
+                and company_name = #{param.companyName}
+            </if>
+            and deleted = 0
+        </where>
+        order by create_time desc
+    </select>
 </mapper>

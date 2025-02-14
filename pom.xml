@@ -65,6 +65,12 @@
                 <version>${spring-boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-devtools</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <!-- 覆盖logback的依赖配置-->
@@ -250,6 +256,12 @@
             <dependency>
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus-boot-starter</artifactId>
+                <version>3.4.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-generator</artifactId>
                 <version>3.4.0</version>
             </dependency>
 

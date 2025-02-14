@@ -1,0 +1,623 @@
+package com.oa.core.service.impl;
+
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.XmlUtil;
+import com.alibaba.fastjson2.JSON;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.oa.common.annotation.MultiTransactional;
+import com.oa.common.constant.TransactionConstant;
+import com.oa.common.core.domain.entity.SysUser;
+import com.oa.common.core.domain.model.LoginUser;
+import com.oa.common.core.redis.RedisCache;
+import com.oa.common.error.BaseCode;
+import com.oa.common.exception.ServiceException;
+import com.oa.common.utils.SecurityUtils;
+import com.oa.common.utils.bean.BeanValidators;
+import com.oa.core.domain.ApprovalSubmissionRecord;
+import com.oa.core.domain.TaskTransferLog;
+import com.oa.core.enums.ApprovalSubmissionRecordStatusEnum;
+import com.oa.core.enums.AuditTypeEnum;
+import com.oa.core.enums.FlowableTaskCallbackOperateTypeEnum;
+import com.oa.core.model.dto.FlowableAuditParam;
+import com.oa.core.model.dto.FlowableCommentParam;
+import com.oa.core.model.dto.FlowableTaskCallbackParam;
+import com.oa.core.model.dto.FlowableTaskTransferParam;
+import com.oa.core.processor.AbstractAuditBizProcessor;
+import com.oa.core.service.FlowableService;
+import com.oa.core.service.IApprovalSubmissionRecordService;
+import com.oa.core.service.ITaskTransferLogService;
+import com.oa.flowable.constants.FlowableConstants;
+import com.oa.flowable.enums.CandidateTypeEnum;
+import com.oa.flowable.enums.ProcessStatusEnum;
+import com.oa.flowable.mapper.flowable.AuditMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.flowable.bpmn.model.BpmnModel;
+import org.flowable.bpmn.model.StartEvent;
+import org.flowable.common.engine.impl.identity.Authentication;
+import org.flowable.engine.HistoryService;
+import org.flowable.engine.RepositoryService;
+import org.flowable.engine.RuntimeService;
+import org.flowable.engine.TaskService;
+import org.flowable.engine.history.HistoricActivityInstance;
+import org.flowable.engine.repository.Deployment;
+import org.flowable.engine.repository.ProcessDefinition;
+import org.flowable.engine.runtime.ProcessInstance;
+import org.flowable.identitylink.api.IdentityLink;
+import org.flowable.task.api.Task;
+import org.flowable.variable.api.history.HistoricVariableInstance;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+
+import javax.annotation.Resource;
+import javax.validation.Validator;
+import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+@Slf4j
+@Service
+public class FlowableServiceImpl implements FlowableService {
+
+    @Value("${bpmnPath}")
+    private String bpmnPath;
+
+    @Resource
+    private RepositoryService repositoryService;
+    @Resource
+    private RuntimeService runtimeService;
+    @Resource
+    private HistoryService historyService;
+    @Resource
+    private TaskService taskService;
+    @Resource
+    private IApprovalSubmissionRecordService approvalSubmissionRecordService;
+    @Resource
+    private RedisCache redisCache;
+    @Resource
+    protected Validator validator;
+    @Resource
+    private ITaskTransferLogService taskTransferLogService;
+    @Resource
+    private AuditMapper auditMapper;
+
+    @Override
+    public void deploy(String fileName, String deployName, String deployKey) {
+        try (InputStream fis = Files.newInputStream(Paths.get(bpmnPath + File.separator + fileName))) {
+            Deployment deploy = repositoryService.createDeployment()
+                    .addInputStream(fileName, fis).name(deployName).key(deployKey).deploy();
+            log.info("部署成功:{}", deploy.getId());
+        } catch (Exception e) {
+            log.error("发布失败", e);
+            throw new ServiceException(BaseCode.SYSTEM_FAILED);
+        }
+    }
+
+    @Transactional(TransactionConstant.FLOWABLE)
+    @Override
+    public String startProcess(Long bizId, AuditTypeEnum auditTypeEnum) {
+        LoginUser loginUser = SecurityUtils.getLoginUser();
+        Long id = loginUser.getUserId();
+        ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery()
+                .processDefinitionKey(auditTypeEnum.getProcessDefinitionKey()).latestVersion().singleResult();
+        BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinition.getId());
+        StartEvent flowElement = (StartEvent) bpmnModel.getFlowElement(auditTypeEnum.getProcessDefinitionKey() + "StartEvent");
+        String initiator = flowElement.getInitiator();
+        if (!loginUser.getUser().isAdmin() && !StringUtils.isBlank(initiator) &&
+                Arrays.stream(initiator.split(",")).map(Long::valueOf).noneMatch(x -> x.equals(id))) {
+            throw new ServiceException("用户无权发起审批");
+        }
+        log.info("=========开启流程，userId：{}=========", id);
+        Map<String, Object> variableMap = new HashMap<>();
+        variableMap.put("bizId", bizId);
+        variableMap.put("bizType", auditTypeEnum.getCode());
+        Authentication.setAuthenticatedUserId(String.valueOf(id));
+        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(auditTypeEnum.getProcessDefinitionKey(), variableMap);
+        log.info("=========流程已开启，实例ID：{}=========", processInstance.getId());
+        return processInstance.getId();
+    }
+
+    @MultiTransactional
+    @Override
+    public void audit(FlowableAuditParam param) {
+        ProcessStatusEnum statusEnum = ProcessStatusEnum.codeMap.get(param.getAuditAction());
+        if (Objects.isNull(statusEnum)) {
+            throw new ServiceException(BaseCode.PARAM_ERROR);
+        }
+        if (statusEnum != ProcessStatusEnum.REJECT && statusEnum != ProcessStatusEnum.COMPLETE) {
+            throw new ServiceException(BaseCode.PARAM_ERROR);
+        }
+        FlowableCommentParam comment = param.getComment();
+        boolean commentIsNullFlag = Objects.isNull(comment);
+        if (statusEnum == ProcessStatusEnum.REJECT && (commentIsNullFlag || StringUtils.isBlank(comment.getRemark()))) {
+            throw new ServiceException("请填写拒绝原因");
+        }
+        AuditTypeEnum auditTypeEnum = AuditTypeEnum.codeMap.get(param.getAuditType());
+        String procInstId = getProcInstIdByBizIdAndType(param.getId(), auditTypeEnum);
+        ProcessInstance processInstance = getProcessInstanceByProcInstId(procInstId);
+        List<Task> taskList = getActiveTaskListByProcInstId(procInstId);
+        String commentStr = StringUtils.EMPTY;
+        if (!commentIsNullFlag) {
+            commentStr = JSON.toJSONString(comment);
+        }
+        HashMap<String, Object> variables = new HashMap<>();
+        variables.put(FlowableConstants.AUDIT_VAR_NAME, param.getAuditAction());
+        if (statusEnum == ProcessStatusEnum.COMPLETE) {
+            if (auditTypeEnum == AuditTypeEnum.APPROVAL_BUSINESS_ORDER) {
+                String extra = param.getExtra();
+                if (StringUtils.isBlank(extra)) {
+                    throw new ServiceException(BaseCode.PARAM_ERROR);
+                }
+                BeanValidators.validateWithException(validator, JSON.parseObject(extra, auditTypeEnum.getAuditForm()));
+                variables.put(FlowableConstants.AUDIT_VAR_NAME, statusEnum);
+            }
+        }
+        LoginUser loginUser = SecurityUtils.getLoginUser();
+        SysUser user = loginUser.getUser();
+        String userId = getUserIdXmlByUserId(loginUser.getUserId());
+        boolean flag = false;
+        Authentication.setAuthenticatedUserId(userId);
+        Iterator<Task> iterator = taskList.iterator();
+        do {
+            Task task = iterator.next();
+            // TODO 超管这里应该是再需要特殊处理的，总不能点个审批把所有的实例任务都批完了吧
+            if (user.isAdmin()) {
+                flag = true;
+                taskService.claim(task.getId(), userId);
+                if (!commentIsNullFlag) {
+                    taskService.addComment(task.getId(), processInstance.getProcessInstanceId(), commentStr);
+                }
+                taskService.complete(task.getId(), variables);
+                continue;
+            }
+            if (checkTaskContainsUserId(task.getId(), userId)) {
+                continue;
+            }
+            flag = true;
+            taskService.claim(task.getId(), userId);
+            if (!commentIsNullFlag) {
+                taskService.addComment(task.getId(), processInstance.getProcessInstanceId(), commentStr);
+            }
+            taskService.complete(task.getId(), variables);
+        } while (iterator.hasNext());
+        if (!flag) {
+            throw new ServiceException("用户无权审批任务");
+        }
+        HistoricVariableInstance historicVariableInstance = historyService.createHistoricVariableInstanceQuery()
+                .processInstanceId(processInstance.getId()).variableName(FlowableConstants.PROCESS_STATUS).singleResult();
+        ProcessStatusEnum processStatusEnum = ProcessStatusEnum.codeMap.get((String) historicVariableInstance.getValue());
+        approvalSubmissionRecordService.update(Wrappers.<ApprovalSubmissionRecord>lambdaUpdate()
+                .set(ApprovalSubmissionRecord::getApprovalStatus, getApprovalSubmissionRecordStatusEnum(processStatusEnum).getCode())
+                .set(ApprovalSubmissionRecord::getUpdateUser, loginUser.getUserId())
+                .set(ApprovalSubmissionRecord::getApprovalTime, new Date())
+                .eq(ApprovalSubmissionRecord::getBizId, param.getId())
+                .eq(ApprovalSubmissionRecord::getAuditType, param.getAuditType()));
+    }
+
+    private ApprovalSubmissionRecordStatusEnum getApprovalSubmissionRecordStatusEnum(ProcessStatusEnum processStatusEnum) {
+        ApprovalSubmissionRecordStatusEnum approvalSubmissionRecordStatusEnum;
+        if (processStatusEnum == ProcessStatusEnum.REJECT) {
+            approvalSubmissionRecordStatusEnum = ApprovalSubmissionRecordStatusEnum.REJECT;
+        } else if (processStatusEnum.getCode().toLowerCase().contains(ProcessStatusEnum.COMPLETE.getCode())) {
+            approvalSubmissionRecordStatusEnum = ApprovalSubmissionRecordStatusEnum.PASS;
+        } else {
+            approvalSubmissionRecordStatusEnum = ApprovalSubmissionRecordStatusEnum.AUDIT;
+        }
+        return approvalSubmissionRecordStatusEnum;
+    }
+
+    @MultiTransactional
+    @Override
+    public void transfer(FlowableTaskTransferParam param) {
+        String procInstId = getProcInstIdByBizIdAndType(param.getId(), AuditTypeEnum.codeMap.get(param.getAuditType()));
+        if (StringUtils.isBlank(procInstId)) {
+            throw new ServiceException("流程实例不存在");
+        }
+        ProcessInstance processInstance = getProcessInstanceByProcInstId(procInstId);
+        List<Task> taskList = getActiveTaskListByProcInstId(procInstId);
+        String userId = getUserIdXmlByUserId(SecurityUtils.getUserId());
+        String targetUserId = getUserIdXmlByUserId(param.getTargetUserId());
+        FlowableCommentParam comment = param.getComment();
+        if (Objects.isNull(comment)) {
+            comment = new FlowableCommentParam();
+            comment.setTransferTo(targetUserId);
+        }
+        String commentStr = JSON.toJSONString(comment);
+        boolean flag = false;
+        Iterator<Task> iterator = taskList.iterator();
+        do {
+            Task task = iterator.next();
+            if (checkTaskContainsUserId(task.getId(), userId)) {
+                continue;
+            }
+            flag = true;
+            taskService.claim(task.getId(), userId);
+            taskService.unclaim(task.getId());
+            addTargetUserAndDelOtherCandidateUsers(task.getId(), targetUserId);
+            taskService.claim(task.getId(), targetUserId);
+            Authentication.setAuthenticatedUserId(userId);
+            taskService.addComment(task.getId(), processInstance.getProcessInstanceId(), commentStr);
+            TaskTransferLog taskTransferLog = new TaskTransferLog();
+            taskTransferLog.setTaskId(task.getId());
+            taskTransferLog.setInstanceId(processInstance.getProcessInstanceId());
+            taskTransferLog.setOriginalAssignee(SecurityUtils.getUserId());
+            taskTransferLog.setTargetAssignee(param.getTargetUserId());
+            taskTransferLog.setOperationType(1);
+            taskTransferLog.setCreateUser(SecurityUtils.getUserId());
+            taskTransferLog.setReviewData(commentStr);
+            taskTransferLogService.save(taskTransferLog);
+        } while (iterator.hasNext());
+        if (!flag) {
+            throw new ServiceException("用户无权转交任务");
+        }
+    }
+
+    @MultiTransactional
+    @Override
+    public void rollback(FlowableTaskCallbackParam param) {
+        AuditTypeEnum auditTypeEnum = AuditTypeEnum.codeMap.get(param.getAuditType());
+        String procInstId = getProcInstIdByBizIdAndType(param.getId(), auditTypeEnum);
+        if (StringUtils.isBlank(procInstId)) {
+            throw new ServiceException("流程实例不存在");
+        }
+        LoginUser loginUser = SecurityUtils.getLoginUser();
+        Long userId = loginUser.getUserId();
+        ProcessInstance processInstance = getProcessInstanceByProcInstId(procInstId);
+        List<Task> taskList = getActiveTaskListByProcInstId(procInstId);
+
+        Integer operateType = param.getOperateType();
+        ApprovalSubmissionRecordStatusEnum statusEnum = ApprovalSubmissionRecordStatusEnum.ROLLBACK;
+        if (FlowableTaskCallbackOperateTypeEnum.CANCEL.getValue().equals(operateType)) {
+            statusEnum = ApprovalSubmissionRecordStatusEnum.CANCEL;
+        }
+        AuditTypeEnum.getProcessorBean(param.getAuditType()).whenRevoke(param.getId(), statusEnum);
+        if (FlowableTaskCallbackOperateTypeEnum.CANCEL.getValue().equals(operateType)) {
+            String startUserId = historyService.createHistoricProcessInstanceQuery().processInstanceId(processInstance.getProcessInstanceId())
+                    .unfinished().singleResult().getStartUserId();
+            if (StringUtils.isBlank(startUserId)) {
+                throw new ServiceException("发起人不存在");
+            }
+            if (!userId.equals(Long.valueOf(startUserId))) {
+                throw new ServiceException("当前用户不是发起人，不准撤销");
+            }
+            runtimeService.deleteProcessInstance(procInstId, "发起人撤销，流程结束");
+            approvalSubmissionRecordService.update(Wrappers.<ApprovalSubmissionRecord>lambdaUpdate()
+                    .set(ApprovalSubmissionRecord::getApprovalStatus, ApprovalSubmissionRecordStatusEnum.CANCEL.getCode())
+                    .set(ApprovalSubmissionRecord::getApprovalTime, new Date())
+                    .set(ApprovalSubmissionRecord::getUpdateUser, userId)
+                    .eq(ApprovalSubmissionRecord::getBizId, param.getId())
+                    .eq(ApprovalSubmissionRecord::getAuditType, param.getAuditType()));
+            //更新任务日志表
+            taskList.forEach(x -> {
+                TaskTransferLog taskTransferLog = new TaskTransferLog();
+                taskTransferLog.setTaskId(x.getId());
+                taskTransferLog.setInstanceId(processInstance.getProcessInstanceId());
+                taskTransferLog.setOperationType(3);
+                taskTransferLog.setCreateUser(userId);
+                taskTransferLogService.save(taskTransferLog);
+            });
+            return;
+        }
+        boolean flag = false;
+        String userIdXml = getUserIdXmlByUserId(userId);
+        FlowableCommentParam comment = param.getComment();
+        String commentStr = StringUtils.EMPTY;
+        if (!Objects.isNull(comment)) {
+            commentStr = JSON.toJSONString(comment);
+        }
+        Authentication.setAuthenticatedUserId(userIdXml);
+        Iterator<Task> iterator = taskList.iterator();
+        do {
+            Task task = iterator.next();
+
+            // 记录任务退回日志
+            TaskTransferLog rollbackLog = new TaskTransferLog();
+            rollbackLog.setTaskId(task.getId());
+            rollbackLog.setInstanceId(processInstance.getProcessInstanceId());
+            rollbackLog.setOperationType(2);
+            rollbackLog.setCreateUser(userId);
+            rollbackLog.setReviewData(JSON.toJSONString(commentStr));
+
+            if (loginUser.getUser().isAdmin()) {
+                flag = true;
+                taskService.addComment(task.getId(), processInstance.getProcessInstanceId(), commentStr);
+                taskTransferLogService.save(rollbackLog);
+                runtimeService.createChangeActivityStateBuilder()
+                        .processInstanceId(processInstance.getProcessInstanceId())
+                        .moveExecutionToActivityId(task.getExecutionId(), auditTypeEnum.getProcessDefinitionKey() + "ReSubmit")
+                        .changeState();
+                continue;
+            }
+            if (checkTaskContainsUserId(task.getId(), userIdXml)) {
+                continue;
+            }
+            flag = true;
+            taskService.addComment(task.getId(), processInstance.getProcessInstanceId(), commentStr);
+            taskTransferLogService.save(rollbackLog);
+            runtimeService.createChangeActivityStateBuilder()
+                    .processInstanceId(processInstance.getProcessInstanceId())
+                    .moveExecutionToActivityId(task.getExecutionId(), auditTypeEnum.getProcessDefinitionKey() + "ReSubmit")
+                    .changeState();
+        } while (iterator.hasNext());
+        if (!flag) {
+            throw new ServiceException("用户无权退回");
+        }
+        approvalSubmissionRecordService.update(Wrappers.<ApprovalSubmissionRecord>lambdaUpdate()
+                .set(ApprovalSubmissionRecord::getApprovalStatus, ApprovalSubmissionRecordStatusEnum.ROLLBACK.getCode())
+                .set(ApprovalSubmissionRecord::getApprovalTime, new Date())
+                .set(ApprovalSubmissionRecord::getUpdateUser, userId)
+                .eq(ApprovalSubmissionRecord::getBizId, param.getId())
+                .eq(ApprovalSubmissionRecord::getAuditType, param.getAuditType()));
+    }
+
+    /**
+     * 获取流程实例ID
+     *
+     * @param bizId         业务ID
+     * @param auditTypeEnum 业务类型
+     * @return 流程实例ID
+     */
+    private String getProcInstIdByBizIdAndType(Long bizId, AuditTypeEnum auditTypeEnum) {
+        if (Objects.isNull(auditTypeEnum)) {
+            throw new ServiceException(BaseCode.PARAM_ERROR);
+        }
+        AbstractAuditBizProcessor processorBean = AuditTypeEnum.getProcessorBean(auditTypeEnum.getCode());
+        ApprovalSubmissionRecord entity = approvalSubmissionRecordService.selectByAuditNo(processorBean.getAuditNoByBizId(bizId));
+        if (Objects.isNull(entity) || StringUtils.isBlank(entity.getInstanceId())) {
+            return StringUtils.EMPTY;
+        }
+        return entity.getInstanceId();
+    }
+
+    /**
+     * 根据ID获取流程实例
+     *
+     * @param procInstId 流程实例ID
+     * @return 流程实例
+     */
+    private ProcessInstance getProcessInstanceByProcInstId(String procInstId) {
+        ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
+                .processInstanceId(procInstId).singleResult();
+        if (Objects.isNull(processInstance)) {
+            log.error("流程实例不存在，流程ID：{}", procInstId);
+            throw new ServiceException("流程实例不存在");
+        }
+        if (processInstance.isEnded()) {
+            log.error("流程实例已结束，流程ID：{}", procInstId);
+            throw new ServiceException("流程实例已结束");
+        }
+        return processInstance;
+    }
+
+    /**
+     * 根据ID获取活动的任务列表
+     *
+     * @param procInstId 流程实例ID
+     * @return 活动任务列表
+     */
+    private List<Task> getActiveTaskListByProcInstId(String procInstId) {
+        List<Task> taskList = taskService.createTaskQuery()
+                .processInstanceId(procInstId).active().list();
+        if (CollectionUtils.isEmpty(taskList)) {
+            log.error("未找到活动的任务，流程ID：{}", procInstId);
+            throw new ServiceException("未找到活动的任务");
+        }
+        return taskList;
+    }
+
+    /**
+     * 校验任务是否包含用户
+     *
+     * @param taskId 任务ID
+     * @param userId 用户ID
+     * @return boolean
+     */
+    private boolean checkTaskContainsUserId(String taskId, String userId) {
+        List<IdentityLink> identityLinkList = taskService.getIdentityLinksForTask(taskId);
+        if (CollectionUtils.isEmpty(identityLinkList)) {
+            log.info("节点没有候选人，不进行处理，taskId：{}", taskId);
+            return false;
+        }
+        return identityLinkList.stream().map(IdentityLink::getUserId).filter(StringUtils::isNotBlank)
+                .noneMatch(x -> x.equals(userId));
+    }
+
+    private void addTargetUserAndDelOtherCandidateUsers(String taskId, String targetUserId) {
+        List<IdentityLink> identityLinkList = taskService.getIdentityLinksForTask(taskId);
+        if (CollectionUtils.isEmpty(identityLinkList)) {
+            taskService.addCandidateUser(taskId, targetUserId);
+            log.info("节点没有候选人，不进行处理，taskId：{}", taskId);
+            return;
+        }
+        identityLinkList.stream().map(IdentityLink::getUserId).forEach(x -> {
+            String type = parseXmlTargetContent(x, "type");
+            if (StringUtils.isBlank(type)) {
+                log.error("候选人设置异常，未找到<type>标签，type：{}", x);
+                return;
+            }
+            if (Integer.valueOf(type).equals(CandidateTypeEnum.CC.getValue())) {
+                return;
+            }
+            taskService.deleteCandidateUser(taskId, x);
+        });
+        taskService.addCandidateUser(taskId, targetUserId);
+    }
+
+    public static String parseXmlTargetContent(Document document, String elementName) {
+        NodeList nodeList = document.getElementsByTagName(elementName);
+        if (Objects.isNull(nodeList)) {
+            log.error("候选人设置异常，未找到<{}>标签", elementName);
+            return StringUtils.EMPTY;
+        }
+        return nodeList.item(0).getTextContent();
+    }
+
+    public static String parseXmlTargetContent(String xmlStr, String elementName) {
+        if (StringUtils.isBlank(xmlStr)) {
+            return StringUtils.EMPTY;
+        }
+        return parseXmlTargetContent(XmlUtil.parseXml(xmlStr), elementName);
+    }
+
+    /**
+     * 根据userId和候选人类型获取Xml格式的用户ID
+     *
+     * @param userId 用户ID
+     * @return 用户ID
+     */
+    public static String getUserIdXmlByUserId(Long userId) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("userId", userId);
+        map.put("type", CandidateTypeEnum.AUDIT.getValue());
+        return XmlUtil.mapToXmlStr(map);
+    }
+
+    @Override
+    public List<String> selectPendingApprovalByUser(Long userId) {
+        //构建用户对象
+        Map<String, Object> candidate = new LinkedHashMap<>();
+        candidate.put("userId", userId);
+        candidate.put("type", 0);
+        //待我申领的任务
+        List<Task> taskList = taskService.createTaskQuery()
+                .taskCandidateUser(XmlUtil.mapToXmlStr(candidate))
+                .list();
+        List<Task> assigneeTask = taskService.createTaskQuery()
+                .taskAssignee(XmlUtil.mapToXmlStr(candidate))
+                .list();
+        taskList.addAll(assigneeTask);
+        List<String> instanceIds = new LinkedList<>();
+        for (Task task : taskList) {
+            String processInstanceId = task.getProcessInstanceId();
+            instanceIds.add(processInstanceId);
+        }
+        return instanceIds;
+    }
+
+    @Override
+    public List<String> selectSendMeByUser(Long userId) {
+        Map<String, Object> candidate = new LinkedHashMap<>();
+        candidate.put("userId", userId);
+        candidate.put("type", CandidateTypeEnum.CC.getValue());
+        return auditMapper.getCandidateProcInstId(XmlUtil.mapToXmlStr(candidate));
+    }
+
+    @Override
+    public List<String> selectApprovedByUser(Long userId) {
+        Map<String, Object> candidate = new LinkedHashMap<>();
+        candidate.put("userId", userId);
+        candidate.put("type", CandidateTypeEnum.AUDIT.getValue());
+        List<HistoricActivityInstance> list = historyService
+                .createHistoricActivityInstanceQuery()
+                .finished()
+                .taskAssignee(XmlUtil.mapToXmlStr(candidate))
+                .list();
+        List<String> instanceIds = new LinkedList<>();
+        for (HistoricActivityInstance task : list) {
+            String processInstanceId = task.getProcessInstanceId();
+            String activityId = task.getActivityId();
+            if (activityId.contains("ReSubmit")) {
+                continue;
+            }
+            instanceIds.add(processInstanceId);
+        }
+        return instanceIds;
+    }
+
+    @Override
+    public void remind(Long id, Integer auditType) {
+        AbstractAuditBizProcessor processorBean = AuditTypeEnum.getProcessorBean(auditType);
+        ApprovalSubmissionRecord record = approvalSubmissionRecordService.selectByAuditNo(processorBean.getAuditNoByBizId(id));
+        if (Objects.isNull(record)) {
+            throw new ServiceException("未找到审批提交记录");
+        }
+        if (ApprovalSubmissionRecordStatusEnum.AUDIT.getCode() != record.getApprovalStatus()) {
+            throw new ServiceException("流程状态不是审批中");
+        }
+        Set<Long> needSendTodoUserIdSet = new HashSet<>();
+        String keyPrefix = "remind:" + record.getInstanceId() + ":";
+        List<Task> taskList = getActiveTaskListByProcInstId(record.getInstanceId());
+        Iterator<Task> iterator = taskList.iterator();
+        do {
+            Task task = iterator.next();
+            if (!redisCache.setnx(keyPrefix + task.getId(), StringUtils.EMPTY, 1, TimeUnit.HOURS)) {
+                throw new ServiceException("催办频繁，请稍后再试");
+            }
+            List<IdentityLink> identityLinkList = taskService.getIdentityLinksForTask(task.getId());
+            if (CollectionUtils.isEmpty(identityLinkList)) {
+                log.info("节点没有候选人，不催办，taskId：{}", task.getId());
+                continue;
+            }
+            identityLinkList.stream().filter(x -> !StringUtils.isBlank(x.getUserId()))
+                    .forEach(x -> {
+                        Document document = XmlUtil.parseXml(x.getUserId());
+                        String type = parseXmlTargetContent(document, "type");
+                        if (StringUtils.isBlank(type)) {
+                            log.error("候选人设置异常，未找到<type>标签，userId：{}", x);
+                            return;
+                        }
+                        if (Integer.valueOf(type).equals(CandidateTypeEnum.CC.getValue())) {
+                            return;
+                        }
+                        String userId = parseXmlTargetContent(document, "userId");
+                        if (StringUtils.isBlank(userId)) {
+                            log.error("候选人设置异常，未找到<userId>标签，userId：{}", x);
+                            return;
+                        }
+                        needSendTodoUserIdSet.add(Long.valueOf(userId));
+                    });
+        } while (iterator.hasNext());
+        /*User user = userService.getById(record.getAuditInitiatorId());
+        if (Objects.isNull(user)) {
+            throw new BaseException(BaseCode.DATA_NOT_EXIST.getCode(), "审批发起人不存在");
+        }
+        AuditTypeEnum.getProcessorBean(auditType).
+                sendWaitApprovalMessage(AuditRecord.builder()
+                        .bizKey(String.valueOf(record.getBizId()))
+                        .createUser(record.getAuditInitiatorId().intValue())
+                        .createTime(record.getInitiationTime()).build(), user, needSendTodoUserIdSet, auditTypeEnum);*/
+    }
+
+    @Override
+    public Task selectCurrentTask(String instanceId) {
+        List<Task> tasks = taskService.createTaskQuery()
+                .processInstanceId(instanceId)
+                .active()
+                .list();
+        if (CollectionUtil.isEmpty(tasks)) {
+            return null;
+        }
+        return tasks.get(0);
+    }
+
+    @MultiTransactional
+    @Override
+    public void invokeProcessResubmitAfter(Long id, AuditTypeEnum auditTypeEnum, String remark) {
+        AbstractAuditBizProcessor processorBean = AuditTypeEnum.getProcessorBean(auditTypeEnum.getCode());
+        ApprovalSubmissionRecord approvalSubmissionRecord = approvalSubmissionRecordService.selectByAuditNo(processorBean.getAuditNoByBizId(id));
+        if (Objects.isNull(approvalSubmissionRecord)) {
+            throw new ServiceException("流程提交记录不存在");
+        }
+        audit(FlowableAuditParam.builder()
+                .id(id).auditType(auditTypeEnum.getCode())
+                .auditAction(ProcessStatusEnum.COMPLETE.getCode())
+                .comment(new FlowableCommentParam(remark)).build());
+    }
+
+    @Transactional(TransactionConstant.FLOWABLE)
+    @Override
+    public void delProcess(AuditTypeEnum auditTypeEnum, Long bizId) {
+        AbstractAuditBizProcessor processorBean = AuditTypeEnum.getProcessorBean(auditTypeEnum.getCode());
+        ApprovalSubmissionRecord record = approvalSubmissionRecordService.selectByAuditNo(processorBean.getAuditNoByBizId(bizId));
+        if (ApprovalSubmissionRecordStatusEnum.ROLLBACK.getCode() == record.getApprovalStatus()) {
+            runtimeService.deleteProcessInstance(record.getInstanceId(), auditTypeEnum.getDesc() + "删除，流程结束");
+        }
+    }
+}

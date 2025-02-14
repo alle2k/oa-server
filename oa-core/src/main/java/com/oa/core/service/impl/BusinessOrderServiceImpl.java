@@ -8,11 +8,15 @@ import com.oa.common.utils.OrikaMapperUtils;
 import com.oa.common.utils.SecurityUtils;
 import com.oa.common.utils.StringUtils;
 import com.oa.core.domain.BusinessOrder;
+import com.oa.core.enums.AuditTypeEnum;
 import com.oa.core.mapper.master.BusinessOrderMapper;
+import com.oa.core.model.dto.ApprovalSubmissionRecordSaveDto;
 import com.oa.core.model.dto.BusinessOrderQueryDto;
 import com.oa.core.model.dto.BusinessOrderSaveDto;
 import com.oa.core.model.dto.BusinessOrderUpdDto;
 import com.oa.core.model.vo.BusinessOrderPageQueryVo;
+import com.oa.core.service.FlowableService;
+import com.oa.core.service.IApprovalSubmissionRecordService;
 import com.oa.core.service.IBusinessOrderService;
 import com.oa.system.service.ISysUserService;
 import org.springframework.stereotype.Service;
@@ -29,6 +33,10 @@ public class BusinessOrderServiceImpl extends ServiceImpl<BusinessOrderMapper, B
 
     @Resource
     private ISysUserService sysUserService;
+    @Resource
+    private IApprovalSubmissionRecordService approvalSubmissionRecordService;
+    @Resource
+    private FlowableService flowableService;
 
     @MultiTransactional
     @Override
@@ -46,6 +54,16 @@ public class BusinessOrderServiceImpl extends ServiceImpl<BusinessOrderMapper, B
         entity.setCreateUser(userId);
         entity.setUpdateUser(userId);
         save(entity);
+
+        String instanceId = flowableService.startProcess(entity.getId(), AuditTypeEnum.APPROVAL_BUSINESS_ORDER);
+        String auditNo = approvalSubmissionRecordService.add(ApprovalSubmissionRecordSaveDto.builder()
+                .auditTypeEnum(AuditTypeEnum.APPROVAL_BUSINESS_ORDER)
+                .instanceId(instanceId)
+                .bizId(entity.getId())
+                .remark(entity.getRemark())
+                .build());
+        entity.setAuditNo(auditNo);
+        updateById(entity);
     }
 
     @Override

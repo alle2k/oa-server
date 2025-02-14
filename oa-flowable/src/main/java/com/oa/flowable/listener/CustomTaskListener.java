@@ -21,7 +21,5 @@ public class CustomTaskListener implements TaskListener {
         // 其他任务执行逻辑
         log.info("用户任务执行结束，任务名称：{}，执行结果：{}", delegateTask.getName(), auditResult);
         taskService.setVariableLocal(delegateTask.getId(), FlowableConstants.NODE_VAR_NAME, auditResult);
-        // 发送拒绝通知如果需要的话
-        AuditFinishedListener.execute(delegateTask, Boolean.FALSE);
     }
 }

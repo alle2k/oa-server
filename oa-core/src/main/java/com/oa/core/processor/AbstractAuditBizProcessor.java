@@ -21,6 +21,16 @@ public abstract class AbstractAuditBizProcessor {
     public abstract String getAuditNoByBizId(Long bizId);
 
     /**
+     * 通过时
+     */
+    public abstract void whenPass(Long bizId);
+
+    /**
+     * 拒绝时
+     */
+    public abstract void whenReject(Long bizId);
+
+    /**
      * 撤销时
      *
      * @param bizId      业务ID

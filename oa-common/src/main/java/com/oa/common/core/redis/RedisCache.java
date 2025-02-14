@@ -248,4 +248,14 @@ public class RedisCache {
     public boolean setnx(String key, String value, long time, TimeUnit timeUnit) {
         return Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(key, value, time, timeUnit));
     }
+
+    /**
+     * 自增
+     *
+     * @param key
+     * @return
+     */
+    public Long incr(String key) {
+        return redisTemplate.opsForValue().increment(key, 1);
+    }
 }

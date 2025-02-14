@@ -66,7 +66,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class FlowableServiceImpl implements FlowableService {
 
-    @Value("${bpmnPath}")
+    @Value("${oa.bpmnPath}")
     private String bpmnPath;
 
     @Resource

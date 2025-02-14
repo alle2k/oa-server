@@ -2,7 +2,7 @@ package com.oa.flowable.listener;
 
 import cn.hutool.core.util.XmlUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.oa.common.utils.SecurityUtils;
+import com.oa.common.core.domain.entity.SysUser;
 import com.oa.common.utils.spring.SpringUtils;
 import com.oa.flowable.config.ExpressEvaluationCommand;
 import com.oa.flowable.enums.CandidateTypeEnum;
@@ -10,6 +10,7 @@ import com.oa.system.domain.SysUserRole;
 import com.oa.system.enums.ImmutableRoleEnum;
 import com.oa.system.service.ISysDeptService;
 import com.oa.system.service.ISysUserRoleService;
+import com.oa.system.service.ISysUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.flowable.bpmn.model.*;
 import org.flowable.engine.HistoryService;
@@ -67,7 +68,8 @@ public class CandidateParseListener implements TaskListener, ExecutionListener {
 
     private void doCandidateParse(List<SequenceFlow> sequenceFlowList, String currentUserId, VariableScope variableScope) {
         ManagementService managementService = SpringUtils.getBean(ManagementService.class);
-        Set<Long> auditUserIds = SpringUtils.getBean(ISysDeptService.class).recursiveGetDeptLeader(Collections.singleton(SecurityUtils.getDeptId()));
+        SysUser user = SpringUtils.getBean(ISysUserService.class).getById(currentUserId);
+        Set<Long> auditUserIds = SpringUtils.getBean(ISysDeptService.class).recursiveGetDeptLeader(Collections.singleton(user.getDeptId()));
         Set<Long> ccUserIds = SpringUtils.getBean(ISysUserRoleService.class).selectListByRoleIds(
                         Stream.of(ImmutableRoleEnum.ACCOUNTANT.getCode(), ImmutableRoleEnum.BOSS.getCode()).map(Long::valueOf).collect(Collectors.toList()))
                 .stream().map(SysUserRole::getUserId).collect(Collectors.toSet());

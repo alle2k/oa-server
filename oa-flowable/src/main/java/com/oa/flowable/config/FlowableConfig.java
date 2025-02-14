@@ -1,9 +1,7 @@
 package com.oa.flowable.config;
 
 import com.oa.flowable.listener.ProcessInstanceStatusListener;
-import org.flowable.engine.ProcessEngine;
-import org.flowable.engine.ProcessEngineConfiguration;
-import org.flowable.engine.RuntimeService;
+import org.flowable.engine.*;
 import org.flowable.spring.SpringProcessEngineConfiguration;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -35,10 +33,35 @@ public class FlowableConfig {
         return configuration.buildProcessEngine();
     }
 
+    @Bean("repositoryService")
+    public RepositoryService repositoryService(@Qualifier("processEngine") ProcessEngine processEngine) {
+        return processEngine.getRepositoryService();
+    }
+
     @Bean("runtimeService")
     public RuntimeService runtimeService(@Qualifier("processEngine") ProcessEngine processEngine) {
         RuntimeService runtimeService = processEngine.getRuntimeService();
         runtimeService.addEventListener(processInstanceStatusListener);
         return runtimeService;
+    }
+
+    @Bean("taskService")
+    public TaskService taskService(@Qualifier("processEngine")ProcessEngine processEngine) {
+        return processEngine.getTaskService();
+    }
+
+    @Bean("historyService")
+    public HistoryService historyService(@Qualifier("processEngine")ProcessEngine processEngine) {
+        return processEngine.getHistoryService();
+    }
+
+    @Bean("managementService")
+    public ManagementService managementService(@Qualifier("processEngine")ProcessEngine processEngine) {
+        return processEngine.getManagementService();
+    }
+
+    @Bean("identityService")
+    public IdentityService identityService(@Qualifier("processEngine")ProcessEngine processEngine) {
+        return processEngine.getIdentityService();
     }
 }

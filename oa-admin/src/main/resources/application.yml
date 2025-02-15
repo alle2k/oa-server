@@ -5,6 +5,7 @@ oa:
   addressEnabled: false
   # 验证码类型 math 数字计算 char 字符验证
   captchaType: math
+  bpmnPath: C:\Users\battl\Desktop
 
 # 开发环境配置
 server:
@@ -120,3 +121,5 @@ xss:
 flowable:
   # 不自动部署
   check-process-definitions: false
+  security:
+    enable: false

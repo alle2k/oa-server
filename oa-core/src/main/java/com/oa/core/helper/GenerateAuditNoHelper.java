@@ -18,10 +18,11 @@ public class GenerateAuditNoHelper implements InitializingBean {
 
     public String get() {
         String date = DateUtils.parseDateToStr(DateUtils.YYYYMMDD, new Date());
-        Long value = redisCache.<Long>getCacheObject(date);
+        Integer value = redisCache.getCacheObject(date);
         if (Objects.isNull(value)) {
-            redisCache.setCacheObject(date, 1L, 1, TimeUnit.DAYS);
-            return date + "0001";
+            Long increment = redisCache.incr(date);
+            redisCache.expire(date, 1, TimeUnit.DAYS);
+            return date + String.format("%04d", increment);
         }
         return date + String.format("%04d", redisCache.incr(date));
     }
@@ -29,10 +30,11 @@ public class GenerateAuditNoHelper implements InitializingBean {
     @Override
     public void afterPropertiesSet() throws Exception {
         String date = DateUtils.parseDateToStr(DateUtils.YYYYMMDD, new Date());
-        Long value = redisCache.<Long>getCacheObject(date);
+        Integer value = redisCache.getCacheObject(date);
         if (!Objects.isNull(value)) {
             return;
         }
-        redisCache.setCacheObject(date, 1L, 1, TimeUnit.DAYS);
+        redisCache.incr(date);
+        redisCache.expire(date, 1, TimeUnit.DAYS);
     }
 }

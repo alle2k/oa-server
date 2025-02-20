@@ -123,3 +123,10 @@ flowable:
   check-process-definitions: false
   security:
     enable: false
+
+huawei:
+  obs:
+    accessKeyId: ZH7YEZQZESXDGZA0E8PA
+    secretAccessKeyId: SFc7gJfgVpu5PaOgp8QC7rHKiaTCLGKFcGPWRA2L
+    endPoint: obs.cn-east-3.myhuaweicloud.com
+    bucketName: aka-noodle

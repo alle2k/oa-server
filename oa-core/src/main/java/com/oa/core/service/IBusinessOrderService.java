@@ -5,7 +5,7 @@ import com.oa.core.domain.BusinessOrder;
 import com.oa.core.model.dto.BusinessOrderQueryDto;
 import com.oa.core.model.dto.BusinessOrderSaveDto;
 import com.oa.core.model.dto.BusinessOrderUpdDto;
-import com.oa.core.model.vo.BusinessOrderPageQueryVo;
+import com.oa.core.model.vo.BusinessOrderShortVo;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ public interface IBusinessOrderService extends IService<BusinessOrder> {
      * @param queryDto 查询域条件
      * @return List
      */
-    List<BusinessOrderPageQueryVo> pageQuery(BusinessOrderQueryDto queryDto);
+    List<BusinessOrderShortVo> pageQuery(BusinessOrderQueryDto queryDto);
 
     /**
      * 修改订单

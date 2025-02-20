@@ -14,7 +14,7 @@ import com.oa.core.model.dto.ApprovalSubmissionRecordSaveDto;
 import com.oa.core.model.dto.BusinessOrderQueryDto;
 import com.oa.core.model.dto.BusinessOrderSaveDto;
 import com.oa.core.model.dto.BusinessOrderUpdDto;
-import com.oa.core.model.vo.BusinessOrderPageQueryVo;
+import com.oa.core.model.vo.BusinessOrderShortVo;
 import com.oa.core.service.FlowableService;
 import com.oa.core.service.IApprovalSubmissionRecordService;
 import com.oa.core.service.IBusinessOrderService;
@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -67,19 +68,27 @@ public class BusinessOrderServiceImpl extends ServiceImpl<BusinessOrderMapper, B
     }
 
     @Override
-    public List<BusinessOrderPageQueryVo> pageQuery(BusinessOrderQueryDto queryDto) {
+    public List<BusinessOrderShortVo> pageQuery(BusinessOrderQueryDto queryDto) {
         Page<BusinessOrder> page = getBaseMapper().pageQuery(new Page<>(queryDto.getPageNum(), queryDto.getPageSize()), queryDto);
         List<BusinessOrder> list = page.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
         }
-        Map<Long, String> userMap = sysUserService.listByIds(list.stream().map(BusinessOrder::getId).collect(Collectors.toList()))
+        Map<Long, String> userMap = sysUserService.listByIds(list.stream().map(BusinessOrder::getCreateUser).collect(Collectors.toList()))
                 .stream().collect(Collectors.toMap(SysUser::getUserId, SysUser::getNickName));
         boolean userMapEmptyFlag = CollectionUtils.isEmpty(userMap);
         return list.stream().map(x -> {
-            BusinessOrderPageQueryVo resultVo = OrikaMapperUtils.map(x, BusinessOrderPageQueryVo.class);
+            BusinessOrderShortVo resultVo = OrikaMapperUtils.map(x, BusinessOrderShortVo.class);
             if (!userMapEmptyFlag) {
                 resultVo.setCreateUserName(userMap.getOrDefault(x.getCreateUser(), StringUtils.EMPTY));
+            }
+            resultVo.setAnnexUrlList(Collections.emptyList());
+            resultVo.setPaymentScreenshotList(Collections.emptyList());
+            if (!StringUtils.isBlank(x.getAnnexUrl())) {
+                resultVo.setAnnexUrlList(Arrays.stream(x.getAnnexUrl().split(",")).collect(Collectors.toList()));
+            }
+            if (!StringUtils.isBlank(x.getPaymentScreenshot())) {
+                resultVo.setPaymentScreenshotList(Arrays.stream(x.getPaymentScreenshot().split(",")).collect(Collectors.toList()));
             }
             return resultVo;
         }).collect(Collectors.toList());

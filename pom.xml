@@ -271,6 +271,14 @@
                 <artifactId>orika-core</artifactId>
                 <version>${orika.version}</version>
             </dependency>
+
+            <!--华为云OBS-->
+            <!-- https://mvnrepository.com/artifact/com.huaweicloud/esdk-obs-java-bundle -->
+            <dependency>
+                <groupId>com.huaweicloud</groupId>
+                <artifactId>esdk-obs-java-bundle</artifactId>
+                <version>3.24.12</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -297,6 +305,11 @@
                     <target>${java.version}</target>
                     <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
             </plugin>
         </plugins>
     </build>

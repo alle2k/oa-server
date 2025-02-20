@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 @Data
 public class BusinessOrderShortVo {
@@ -54,9 +55,19 @@ public class BusinessOrderShortVo {
     private String annexUrl;
 
     /**
+     * 附件列表
+     */
+    private List<String> annexUrlList;
+
+    /**
      * 打款截图
      */
     private String paymentScreenshot;
+
+    /**
+     * 打款截图列表
+     */
+    private List<String> paymentScreenshotList;
 
     /**
      * 审批状态 0-审批中 1-审批通过 2-已拒绝 4-已撤销 5-已退回
@@ -79,6 +90,11 @@ public class BusinessOrderShortVo {
      * 创建人
      */
     private Long createUser;
+
+    /**
+     * 用户姓名
+     */
+    private String createUserName;
 
     /**
      * 创建时间

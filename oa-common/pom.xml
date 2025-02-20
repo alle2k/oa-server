@@ -151,6 +151,10 @@
             <artifactId>swagger-models</artifactId>
             <version>1.6.2</version>
         </dependency>
-    </dependencies>
 
+        <dependency>
+            <groupId>com.huaweicloud</groupId>
+            <artifactId>esdk-obs-java-bundle</artifactId>
+        </dependency>
+    </dependencies>
 </project>

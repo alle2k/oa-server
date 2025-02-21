@@ -31,6 +31,6 @@ public class ObsController extends BaseController {
         } catch (Exception e) {
             log.error("上传文件失败", e);
         }
-        return success(ObsUtils.upload(input, folder, file.getOriginalFilename()));
+        return success((Object) ObsUtils.upload(input, folder, file.getOriginalFilename()));
     }
 }

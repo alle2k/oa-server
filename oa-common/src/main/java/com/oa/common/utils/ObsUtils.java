@@ -35,14 +35,13 @@ public class ObsUtils {
         try {
             ObjectMetadata metadata = new ObjectMetadata();
             // 指定该Object被下载时的网页的缓存行为
-            metadata.setCacheControl("no-cache");
-            /*if (fileName.substring(fileName.lastIndexOf(".")).equalsIgnoreCase(".pdf")) {
+            metadata.setCacheControl("no-store");
+            if (fileName.substring(fileName.lastIndexOf(".")).equalsIgnoreCase(".pdf")) {
                 metadata.setContentType("application/pdf");
                 metadata.setContentDisposition("inline;filename=\"" + StringUtils.replace(URLEncoder.encode(fileName, "utf-8"), "+", "%20") + "\"");
             } else {
                 metadata.setContentDisposition("attachment;filename=\"" + StringUtils.replace(URLEncoder.encode(fileName, "utf-8"), "+", "%20") + "\""); //兼容 同时防止空格变+
-            }*/
-            metadata.setContentDisposition("attachment;filename=\"" + StringUtils.replace(URLEncoder.encode(fileName, "utf-8"), "+", "%20") + "\""); //兼容 同时防止空格变+
+            }
             String ossFileName = genOssFileName(folder, fileName);
             PutObjectRequest request = new PutObjectRequest();
             request.setBucketName(properties.getBucketName());

@@ -9,6 +9,8 @@ import com.oa.core.enums.ApprovalSubmissionRecordStatusEnum;
 import com.oa.core.helper.GenerateAuditNoHelper;
 import com.oa.core.mapper.master.ApprovalSubmissionRecordMapper;
 import com.oa.core.model.dto.ApprovalSubmissionRecordSaveDto;
+import com.oa.core.model.vo.BizDetailVo;
+import com.oa.core.model.vo.BizInfoBaseVo;
 import com.oa.core.service.IApprovalSubmissionRecordService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,5 +43,11 @@ public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSub
         approvalRecord.setAuditNo(generateAuditNoHelper.get());
         save(approvalRecord);
         return approvalRecord.getAuditNo();
+    }
+
+    @Override
+    public BizDetailVo<BizInfoBaseVo> getBizDetailByBizIdAndAuditType(Long bizId, Integer auditType) {
+
+        return null;
     }
 }

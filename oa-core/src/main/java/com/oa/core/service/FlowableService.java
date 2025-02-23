@@ -4,6 +4,7 @@ import com.oa.core.enums.AuditTypeEnum;
 import com.oa.core.model.dto.FlowableAuditParam;
 import com.oa.core.model.dto.FlowableTaskCallbackParam;
 import com.oa.core.model.dto.FlowableTaskTransferParam;
+import com.oa.core.model.vo.AuditNodeRecordVO;
 import org.flowable.task.api.Task;
 
 import java.util.List;
@@ -73,6 +74,8 @@ public interface FlowableService {
      */
     List<String> selectApprovedByUser(Long userId);
 
+
+    List<AuditNodeRecordVO> selectAllNodeInfo(String instanceId);
 
     /**
      * 催办

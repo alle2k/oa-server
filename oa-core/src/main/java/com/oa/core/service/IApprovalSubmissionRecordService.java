@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.oa.core.domain.ApprovalSubmissionRecord;
 import com.oa.core.enums.DeletedEnum;
 import com.oa.core.model.dto.ApprovalSubmissionRecordSaveDto;
+import com.oa.core.model.vo.BizDetailVo;
+import com.oa.core.model.vo.BizInfoBaseVo;
 
 public interface IApprovalSubmissionRecordService extends IService<ApprovalSubmissionRecord> {
 
@@ -39,4 +41,15 @@ public interface IApprovalSubmissionRecordService extends IService<ApprovalSubmi
      * @return 审批编号
      */
     String add(ApprovalSubmissionRecordSaveDto record);
+
+
+    /**
+     * 根据ID获取业务详情
+     *
+     * @param bizId     PK
+     * @param auditType 审批类型
+     * @return BizDetailVo
+     * @see com.oa.core.enums.ApprovalSubmissionRecordStatusEnum
+     */
+    BizDetailVo<BizInfoBaseVo> getBizDetailByBizIdAndAuditType(Long bizId, Integer auditType);
 }

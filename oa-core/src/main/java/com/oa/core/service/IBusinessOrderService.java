@@ -1,13 +1,17 @@
 package com.oa.core.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.oa.common.error.BaseCode;
+import com.oa.common.exception.ServiceException;
 import com.oa.core.domain.BusinessOrder;
+import com.oa.core.enums.DeletedEnum;
 import com.oa.core.model.dto.BusinessOrderQueryDto;
 import com.oa.core.model.dto.BusinessOrderSaveDto;
 import com.oa.core.model.dto.BusinessOrderUpdDto;
 import com.oa.core.model.vo.BusinessOrderShortVo;
 
 import java.util.List;
+import java.util.Objects;
 
 public interface IBusinessOrderService extends IService<BusinessOrder> {
 
@@ -32,4 +36,18 @@ public interface IBusinessOrderService extends IService<BusinessOrder> {
      * @param updDto 业务信息
      */
     void modify(BusinessOrderUpdDto updDto);
+
+    /**
+     * 根据ID获取订单信息
+     *
+     * @param id PK
+     * @return BusinessOrder
+     */
+    default BusinessOrder selectOneById(Long id) {
+        BusinessOrder entity = getById(id);
+        if (Objects.isNull(entity) || DeletedEnum.DELETED.getCode().equals(entity.getDeleted())) {
+            throw new ServiceException(BaseCode.DATA_NOT_EXIST);
+        }
+        return entity;
+    }
 }

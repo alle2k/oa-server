@@ -46,6 +46,9 @@ spring:
   messages:
     # 国际化资源文件路径
     basename: i18n/messages
+  jackson:
+    serialization:
+      write-dates-as-timestamps: true
   profiles:
     active: druid
   # 文件上传

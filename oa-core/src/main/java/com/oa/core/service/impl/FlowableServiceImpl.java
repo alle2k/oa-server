@@ -551,6 +551,9 @@ public class FlowableServiceImpl implements FlowableService {
 
     @Override
     public List<AuditNodeRecordVO> selectAllNodeInfo(String instanceId) {
+        if (StringUtils.isBlank(instanceId)) {
+            return Collections.emptyList();
+        }
         //查询历史节点信息
         List<HistoricTaskInstance> historicTaskList = historyService.createHistoricTaskInstanceQuery()
                 .processInstanceId(instanceId)

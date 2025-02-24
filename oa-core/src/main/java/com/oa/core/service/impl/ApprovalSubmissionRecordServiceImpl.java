@@ -3,26 +3,39 @@ package com.oa.core.service.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.oa.common.constant.TransactionConstant;
 import com.oa.common.core.domain.model.LoginUser;
+import com.oa.common.error.BaseCode;
+import com.oa.common.exception.ServiceException;
+import com.oa.common.utils.OrikaMapperUtils;
 import com.oa.common.utils.SecurityUtils;
+import com.oa.common.utils.StringUtils;
 import com.oa.core.domain.ApprovalSubmissionRecord;
+import com.oa.core.domain.BusinessOrder;
 import com.oa.core.enums.ApprovalSubmissionRecordStatusEnum;
+import com.oa.core.enums.AuditTypeEnum;
 import com.oa.core.helper.GenerateAuditNoHelper;
 import com.oa.core.mapper.master.ApprovalSubmissionRecordMapper;
 import com.oa.core.model.dto.ApprovalSubmissionRecordSaveDto;
 import com.oa.core.model.vo.BizDetailVo;
-import com.oa.core.model.vo.BizInfoBaseVo;
+import com.oa.core.model.vo.BusinessOrderShortVo;
+import com.oa.core.service.FlowableService;
 import com.oa.core.service.IApprovalSubmissionRecordService;
+import com.oa.core.service.IBusinessOrderService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Date;
+import java.util.Objects;
 
 @Service
 public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSubmissionRecordMapper, ApprovalSubmissionRecord> implements IApprovalSubmissionRecordService {
 
     @Resource
     private GenerateAuditNoHelper generateAuditNoHelper;
+    @Resource
+    private FlowableService flowableService;
+    @Resource
+    private IBusinessOrderService businessOrderService;
 
     @Transactional(TransactionConstant.MASTER)
     @Override
@@ -46,8 +59,25 @@ public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSub
     }
 
     @Override
-    public BizDetailVo<BizInfoBaseVo> getBizDetailByBizIdAndAuditType(Long bizId, Integer auditType) {
-
-        return null;
+    public BizDetailVo<?> getBizDetailByBizIdAndAuditType(Long bizId, Integer auditType) {
+        BizDetailVo<?> result;
+        AuditTypeEnum auditTypeEnum = AuditTypeEnum.codeMap.get(auditType);
+        ApprovalSubmissionRecord approvalSubmissionRecord = selectByBizIdAndAuditType(bizId, auditTypeEnum);
+        if (Objects.isNull(approvalSubmissionRecord)) {
+            throw new ServiceException(BaseCode.DATA_NOT_EXIST);
+        }
+        switch (auditTypeEnum) {
+            case APPROVAL_BUSINESS_ORDER:
+                BusinessOrder businessOrder = businessOrderService.selectOneById(bizId);
+                BusinessOrderShortVo businessOrderShortVo = OrikaMapperUtils.map(businessOrder, BusinessOrderShortVo.class);
+                businessOrderShortVo.setAnnexUrlList(StringUtils.str2List(businessOrderShortVo.getAnnexUrl()));
+                businessOrderShortVo.setPaymentScreenshotList(StringUtils.str2List(businessOrderShortVo.getPaymentScreenshot()));
+                result = new BizDetailVo<>(businessOrderShortVo);
+                break;
+            default:
+                result = new BizDetailVo<>();
+        }
+        result.setNodeInfo(flowableService.selectAllNodeInfo(approvalSubmissionRecord.getInstanceId()));
+        return result;
     }
 }

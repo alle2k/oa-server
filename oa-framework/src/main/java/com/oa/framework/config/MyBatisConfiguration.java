@@ -48,7 +48,7 @@ public class MyBatisConfiguration implements TransactionManagementConfigurer {
         MybatisSqlSessionFactoryBean sfb = new MybatisSqlSessionFactoryBean();
         sfb.setDataSource(masterDataSource);
         String typeAliasesPackage = env.getProperty("mybatis.typeAliasesPackage");
-        String mapperLocations = env.getProperty("mybatis.mapperLocations");
+        String mapperLocations = env.getProperty("mybatis.masterMapperLocations");
         String configLocation = env.getProperty("mybatis.configLocation");
         sfb.setTypeAliasesPackage(setTypeAliasesPackage(typeAliasesPackage));
         sfb.setMapperLocations(resolveMapperLocations(StringUtils.split(mapperLocations, ",")));
@@ -74,7 +74,7 @@ public class MyBatisConfiguration implements TransactionManagementConfigurer {
     @Bean(name = "flowableSqlSessionFactory")
     public SqlSessionFactory flowableSqlSessionFactory() throws Exception {
         String typeAliasesPackage = env.getProperty("mybatis.typeAliasesPackage");
-        String mapperLocations = env.getProperty("mybatis.mapperLocations");
+        String mapperLocations = env.getProperty("mybatis.flowableMapperLocations");
         String configLocation = env.getProperty("mybatis.configLocation");
         MybatisSqlSessionFactoryBean sfb = new MybatisSqlSessionFactoryBean();
         sfb.setDataSource(flowableDataSource);

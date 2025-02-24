@@ -3,10 +3,10 @@ package com.oa.core.service;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.oa.core.domain.ApprovalSubmissionRecord;
+import com.oa.core.enums.AuditTypeEnum;
 import com.oa.core.enums.DeletedEnum;
 import com.oa.core.model.dto.ApprovalSubmissionRecordSaveDto;
 import com.oa.core.model.vo.BizDetailVo;
-import com.oa.core.model.vo.BizInfoBaseVo;
 
 public interface IApprovalSubmissionRecordService extends IService<ApprovalSubmissionRecord> {
 
@@ -35,6 +35,20 @@ public interface IApprovalSubmissionRecordService extends IService<ApprovalSubmi
     }
 
     /**
+     * 根据业务ID和审批类型获取审批记录
+     *
+     * @param bizId         业务ID
+     * @param auditTypeEnum 审批类型
+     * @return ApprovalSubmissionRecord
+     */
+    default ApprovalSubmissionRecord selectByBizIdAndAuditType(Long bizId, AuditTypeEnum auditTypeEnum) {
+        return getOne(Wrappers.<ApprovalSubmissionRecord>lambdaQuery()
+                .eq(ApprovalSubmissionRecord::getBizId, bizId)
+                .eq(ApprovalSubmissionRecord::getAuditType, auditTypeEnum.getCode())
+                .eq(ApprovalSubmissionRecord::getDeleted, DeletedEnum.UN_DELETE.getCode()));
+    }
+
+    /**
      * 保存
      *
      * @param record 业务信息
@@ -51,5 +65,5 @@ public interface IApprovalSubmissionRecordService extends IService<ApprovalSubmi
      * @return BizDetailVo
      * @see com.oa.core.enums.ApprovalSubmissionRecordStatusEnum
      */
-    BizDetailVo<BizInfoBaseVo> getBizDetailByBizIdAndAuditType(Long bizId, Integer auditType);
+    BizDetailVo<?> getBizDetailByBizIdAndAuditType(Long bizId, Integer auditType);
 }

@@ -22,7 +22,7 @@ public class RedisCache {
     public RedisTemplate redisTemplate;
 
     /**
-     * 缓存基本的对象，Integer、String、实体类等
+     * 缓存的对象
      *
      * @param key   缓存的键值
      * @param value 缓存的值
@@ -32,7 +32,7 @@ public class RedisCache {
     }
 
     /**
-     * 缓存基本的对象，Integer、String、实体类等
+     * 缓存的对象
      *
      * @param key      缓存的键值
      * @param value    缓存的值
@@ -41,6 +41,28 @@ public class RedisCache {
      */
     public <T> void setCacheObject(final String key, final T value, final Integer timeout, final TimeUnit timeUnit) {
         redisTemplate.opsForValue().set(key, serialize(value), timeout, timeUnit);
+    }
+
+    /**
+     * 缓存的基本类型值
+     *
+     * @param key   缓存的键值
+     * @param value 缓存的值
+     */
+    public <T> void set(String key, T value) {
+        redisTemplate.opsForValue().set(key, value);
+    }
+
+    /**
+     * 缓存的基本类型值
+     *
+     * @param key      缓存的键值
+     * @param value    缓存的值
+     * @param timeout  超时时间
+     * @param timeUnit 时间单位
+     */
+    public <T> void set(String key, T value, final Integer timeout, final TimeUnit timeUnit) {
+        redisTemplate.opsForValue().set(key, value, timeout, timeUnit);
     }
 
     /**

@@ -62,7 +62,7 @@ public class SysPasswordService
         if (!matches(user, password))
         {
             retryCount = retryCount + 1;
-            redisCache.setCacheObject(getCacheKey(username), retryCount, lockTime, TimeUnit.MINUTES);
+            redisCache.set(getCacheKey(username), retryCount, lockTime, TimeUnit.MINUTES);
             throw new UserPasswordNotMatchException();
         }
         else

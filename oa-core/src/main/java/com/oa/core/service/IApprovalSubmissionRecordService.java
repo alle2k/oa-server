@@ -8,6 +8,9 @@ import com.oa.core.enums.DeletedEnum;
 import com.oa.core.model.dto.ApprovalSubmissionRecordSaveDto;
 import com.oa.core.model.vo.BizDetailVo;
 
+import java.util.Collection;
+import java.util.List;
+
 public interface IApprovalSubmissionRecordService extends IService<ApprovalSubmissionRecord> {
 
     /**
@@ -31,6 +34,18 @@ public interface IApprovalSubmissionRecordService extends IService<ApprovalSubmi
     default ApprovalSubmissionRecord selectByAuditNo(String auditNo) {
         return getOne(Wrappers.<ApprovalSubmissionRecord>lambdaQuery()
                 .eq(ApprovalSubmissionRecord::getAuditNo, auditNo)
+                .eq(ApprovalSubmissionRecord::getDeleted, DeletedEnum.UN_DELETE.getCode()));
+    }
+
+    /**
+     * 根据审批编号获取审批提交记录
+     *
+     * @param auditNos 审批编号
+     * @return ApprovalSubmissionRecord
+     */
+    default List<ApprovalSubmissionRecord> selectListByAuditNos(Collection<String> auditNos) {
+        return list(Wrappers.<ApprovalSubmissionRecord>lambdaQuery()
+                .in(ApprovalSubmissionRecord::getAuditNo, auditNos)
                 .eq(ApprovalSubmissionRecord::getDeleted, DeletedEnum.UN_DELETE.getCode()));
     }
 

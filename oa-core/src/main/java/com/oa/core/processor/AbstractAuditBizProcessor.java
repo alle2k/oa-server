@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import javax.annotation.Resource;
+import java.util.Collection;
+import java.util.List;
 
 @Slf4j
 public abstract class AbstractAuditBizProcessor {
@@ -19,6 +21,14 @@ public abstract class AbstractAuditBizProcessor {
      * @return 审批编号
      */
     public abstract String getAuditNoByBizId(Long bizId);
+
+    /**
+     * 根据业务ID获取其关联的审批编号
+     *
+     * @param bizIds 业务ID
+     * @return 审批编号
+     */
+    public abstract List<String> getAuditNoByBizIds(Collection<Long> bizIds);
 
     /**
      * 通过时
@@ -37,4 +47,12 @@ public abstract class AbstractAuditBizProcessor {
      * @param statusEnum 审批状态
      */
     public abstract void whenRevoke(Long bizId, ApprovalSubmissionRecordStatusEnum statusEnum);
+
+    /**
+     * 更新业务信息
+     *
+     * @param bizId 业务ID
+     * @param obj   需要更新的信息
+     */
+    public abstract void invoke(Long bizId, Object obj);
 }

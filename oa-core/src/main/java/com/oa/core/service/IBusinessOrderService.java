@@ -50,4 +50,11 @@ public interface IBusinessOrderService extends IService<BusinessOrder> {
         }
         return entity;
     }
+
+    /**
+     * 删除合同订单
+     *
+     * @param ids 订单ID列表
+     */
+    void del(List<Long> ids);
 }

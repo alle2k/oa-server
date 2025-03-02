@@ -12,6 +12,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotEmpty;
+import java.util.List;
 
 @RestController
 @RequestMapping("/order")
@@ -36,6 +38,12 @@ public class BusinessOrderController extends BaseController {
     @PutMapping
     public AjaxResult modify(@Validated @RequestBody BusinessOrderUpdDto updDto) {
         businessOrderService.modify(updDto);
+        return success();
+    }
+
+    @DeleteMapping
+    public AjaxResult del(@Validated @NotEmpty @RequestBody List<Long> ids) {
+        businessOrderService.del(ids);
         return success();
     }
 }

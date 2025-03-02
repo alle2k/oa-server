@@ -3,11 +3,15 @@ package com.oa.core.processor;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.oa.core.domain.BusinessOrder;
 import com.oa.core.enums.ApprovalSubmissionRecordStatusEnum;
+import com.oa.core.model.dto.AuditFormBusinessOrderDto;
 import com.oa.core.service.IBusinessOrderService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class BusinessOrderAuditProcessor extends AbstractAuditBizProcessor {
@@ -18,6 +22,11 @@ public class BusinessOrderAuditProcessor extends AbstractAuditBizProcessor {
     @Override
     public String getAuditNoByBizId(Long bizId) {
         return businessOrderService.getById(bizId).getAuditNo();
+    }
+
+    @Override
+    public List<String> getAuditNoByBizIds(Collection<Long> bizIds) {
+        return businessOrderService.listByIds(bizIds).stream().map(BusinessOrder::getAuditNo).collect(Collectors.toList());
     }
 
     @Override
@@ -40,6 +49,14 @@ public class BusinessOrderAuditProcessor extends AbstractAuditBizProcessor {
     public void whenRevoke(Long bizId, ApprovalSubmissionRecordStatusEnum statusEnum) {
         businessOrderService.update(Wrappers.<BusinessOrder>lambdaUpdate()
                 .set(BusinessOrder::getApprovalStatus, statusEnum.getCode())
+                .eq(BusinessOrder::getId, bizId));
+    }
+
+    @Override
+    public void invoke(Long bizId, Object obj) {
+        AuditFormBusinessOrderDto formDto = (AuditFormBusinessOrderDto) obj;
+        businessOrderService.update(Wrappers.<BusinessOrder>lambdaUpdate()
+                .set(BusinessOrder::getPerformance, formDto.getPerformance())
                 .eq(BusinessOrder::getId, bizId));
     }
 }

@@ -31,6 +31,11 @@ logging:
     com.oa: debug
     org.springframework: warn
     org.flowable: info
+    com.central: INFO
+    org.springframework.web: INFO
+    org.hibernate: INFO
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.hibernate.type.descriptor.sql.BasicExtractor: TRACE
 
 # 用户配置
 user:

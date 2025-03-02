@@ -30,7 +30,7 @@
         , audit_no, payment_time, company_name, company_contact_user_name, company_contact_user_tel, amount, performance, remark, annex_url, payment_screenshot, approval_status, approval_time, deleted, create_user, create_time, update_user, update_time
     </sql>
 
-    <select id="pageQuery" resultMap="businessOrderResultMap">
+    <select id="pageQuery" resultType="businessOrder">
         select <include refid="baseColumn"/>
         from business_order
         <where>

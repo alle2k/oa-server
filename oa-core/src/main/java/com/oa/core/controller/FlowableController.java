@@ -5,6 +5,7 @@ import com.oa.common.core.controller.BaseController;
 import com.oa.common.core.domain.AjaxResult;
 import com.oa.common.core.redis.RedisCache;
 import com.oa.common.exception.ServiceException;
+import com.oa.core.config.FlowableSpecialApprovalConfig;
 import com.oa.core.model.dto.FlowableAuditParam;
 import com.oa.core.model.dto.FlowableRemindParam;
 import com.oa.core.model.dto.FlowableTaskCallbackParam;
@@ -12,10 +13,7 @@ import com.oa.core.model.dto.FlowableTaskTransferParam;
 import com.oa.core.service.FlowableService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.constraints.NotBlank;
@@ -99,5 +97,10 @@ public class FlowableController extends BaseController {
     public AjaxResult remind(@RequestBody @Validated FlowableRemindParam param) {
         flowableService.remind(param.getId(), param.getAuditType());
         return success();
+    }
+
+    @GetMapping("/getSpecialApprovalFormFields")
+    public AjaxResult getSpecialApprovalFormFields() {
+        return success(FlowableSpecialApprovalConfig.SPECIAL_APPROVAL_FORM_MAP);
     }
 }

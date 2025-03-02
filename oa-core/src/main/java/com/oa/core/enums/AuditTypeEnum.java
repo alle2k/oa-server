@@ -1,7 +1,6 @@
 package com.oa.core.enums;
 
 import com.oa.common.utils.spring.SpringUtils;
-import com.oa.core.model.dto.AuditFormBusinessOrderDto;
 import com.oa.core.processor.AbstractAuditBizProcessor;
 import com.oa.core.processor.BusinessOrderAuditProcessor;
 import lombok.AllArgsConstructor;
@@ -16,7 +15,7 @@ import java.util.stream.Collectors;
 @Getter
 public enum AuditTypeEnum {
 
-    APPROVAL_BUSINESS_ORDER(1001, "businessOrder", "提交订单申请", BusinessOrderAuditProcessor.class, AuditFormBusinessOrderDto.class),
+    APPROVAL_BUSINESS_ORDER(1001, "businessOrder", "提交订单申请", BusinessOrderAuditProcessor.class),
     ;
 
     public final static Map<Integer, AuditTypeEnum> codeMap;
@@ -27,10 +26,13 @@ public enum AuditTypeEnum {
      * spring容器中的bean名, 实现 IAuditProcessor
      */
     private final Class<? extends AbstractAuditBizProcessor> processor;
-    private final Class<?> auditForm;
 
     public static AbstractAuditBizProcessor getProcessorBean(Integer code) {
         return SpringUtils.getBean(codeMap.get(code).getProcessor());
+    }
+
+    public AbstractAuditBizProcessor getProcessorBean() {
+        return SpringUtils.getBean(this.processor);
     }
 
     static {

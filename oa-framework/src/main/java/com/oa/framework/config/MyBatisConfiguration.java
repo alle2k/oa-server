@@ -1,6 +1,9 @@
 package com.oa.framework.config;
 
+import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.autoconfigure.SpringBootVFS;
+import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
 import com.oa.common.constant.TransactionConstant;
 import com.oa.common.utils.StringUtils;
@@ -54,6 +57,10 @@ public class MyBatisConfiguration implements TransactionManagementConfigurer {
         sfb.setMapperLocations(resolveMapperLocations(StringUtils.split(mapperLocations, ",")));
         sfb.setConfigLocation(new DefaultResourceLoader().getResource(configLocation));
         sfb.setVfs(SpringBootVFS.class);
+        // 添加分页插件配置
+        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
+        sfb.setPlugins(interceptor);
         return sfb.getObject();
     }
 

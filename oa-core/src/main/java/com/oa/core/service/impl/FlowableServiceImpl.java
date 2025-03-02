@@ -14,8 +14,8 @@ import com.oa.common.error.BaseCode;
 import com.oa.common.exception.ServiceException;
 import com.oa.common.utils.SecurityUtils;
 import com.oa.common.utils.bean.BeanValidators;
+import com.oa.core.config.FlowableSpecialApprovalConfig;
 import com.oa.core.domain.ApprovalSubmissionRecord;
-import com.oa.core.domain.BusinessOrder;
 import com.oa.core.domain.TaskTransferLog;
 import com.oa.core.enums.ApprovalSubmissionRecordStatusEnum;
 import com.oa.core.enums.AuditTypeEnum;
@@ -162,20 +162,17 @@ public class FlowableServiceImpl implements FlowableService {
         HashMap<String, Object> variables = new HashMap<>();
         variables.put(FlowableConstants.AUDIT_VAR_NAME, param.getAuditAction());
         if (statusEnum == ProcessStatusEnum.COMPLETE) {
-            if (auditTypeEnum == AuditTypeEnum.APPROVAL_BUSINESS_ORDER) {
-                if (taskList.stream().noneMatch(x -> x.getTaskDefinitionKey().contains("Resubmit"))) {
-                    String extra = param.getExtra();
-                    if (StringUtils.isBlank(extra)) {
-                        throw new ServiceException(BaseCode.PARAM_ERROR);
-                    }
-                    AuditFormBusinessOrderDto formDto;
-                    BeanValidators.validateWithException(validator, formDto = (AuditFormBusinessOrderDto) JSON.parseObject(extra, auditTypeEnum.getAuditForm()));
-                    businessOrderService.update(Wrappers.<BusinessOrder>lambdaUpdate()
-                            .set(BusinessOrder::getPerformance, formDto.getPerformance())
-                            .eq(BusinessOrder::getId, param.getId()));
+            Class<?> clazz = FlowableSpecialApprovalConfig.SPECIAL_APPROVAL_FORM_MAP.get(taskList.get(0).getTaskDefinitionKey());
+            if (!Objects.isNull(clazz)) {
+                String extra = param.getExtra();
+                if (StringUtils.isBlank(extra)) {
+                    throw new ServiceException(BaseCode.PARAM_ERROR);
                 }
-                variables.put(FlowableConstants.AUDIT_VAR_NAME, statusEnum.getCode());
+                Object obj = JSON.parseObject(extra, clazz);
+                BeanValidators.validateWithException(validator, obj);
+                auditTypeEnum.getProcessorBean().invoke(param.getId(), obj);
             }
+            variables.put(FlowableConstants.AUDIT_VAR_NAME, statusEnum.getCode());
         }
         LoginUser loginUser = SecurityUtils.getLoginUser();
         SysUser user = loginUser.getUser();
@@ -341,7 +338,7 @@ public class FlowableServiceImpl implements FlowableService {
             rollbackLog.setInstanceId(processInstance.getProcessInstanceId());
             rollbackLog.setOperationType(2);
             rollbackLog.setCreateUser(userId);
-            rollbackLog.setReviewData(JSON.toJSONString(commentStr));
+            rollbackLog.setReviewData(commentStr);
 
             if (loginUser.getUser().isAdmin()) {
                 flag = true;
@@ -639,6 +636,7 @@ public class FlowableServiceImpl implements FlowableService {
             if (flag) {
                 continue;
             }
+            userNode.setTaskKey(historicTaskInstance.getTaskDefinitionKey());
             Map<Integer, List<NodeCandidateInfoVO>> candidateTypeMap = getNodeUserByTaskIdAndCandidateType(historicTaskInstance.getId(), null)
                     .stream().collect(Collectors.groupingBy(NodeCandidateInfoVO::getCandidateType));
             if (endTime != null) {
@@ -857,5 +855,20 @@ public class FlowableServiceImpl implements FlowableService {
         if (ApprovalSubmissionRecordStatusEnum.ROLLBACK.getCode() == record.getApprovalStatus()) {
             runtimeService.deleteProcessInstance(record.getInstanceId(), auditTypeEnum.getDesc() + "删除，流程结束");
         }
+    }
+
+    @Transactional(TransactionConstant.FLOWABLE)
+    @Override
+    public void batchDelProcess(AuditTypeEnum auditTypeEnum, Collection<Long> bizIds) {
+        AbstractAuditBizProcessor processorBean = AuditTypeEnum.getProcessorBean(auditTypeEnum.getCode());
+        List<ApprovalSubmissionRecord> list = approvalSubmissionRecordService.selectListByAuditNos(processorBean.getAuditNoByBizIds(bizIds));
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        list.forEach(x -> {
+            if (ApprovalSubmissionRecordStatusEnum.ROLLBACK.getCode() == x.getApprovalStatus()) {
+                runtimeService.deleteProcessInstance(x.getInstanceId(), auditTypeEnum.getDesc() + "删除，流程结束");
+            }
+        });
     }
 }

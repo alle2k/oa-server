@@ -41,4 +41,6 @@ public class AuditNodeRecordVO {
     private Date startTime;
 
     private Date nodeTime;
+
+    private String taskKey;
 }

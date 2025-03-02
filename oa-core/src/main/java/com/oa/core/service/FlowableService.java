@@ -7,6 +7,7 @@ import com.oa.core.model.dto.FlowableTaskTransferParam;
 import com.oa.core.model.vo.AuditNodeRecordVO;
 import org.flowable.task.api.Task;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface FlowableService {
@@ -103,4 +104,12 @@ public interface FlowableService {
      * @param bizId         业务ID
      */
     void delProcess(AuditTypeEnum auditTypeEnum, Long bizId);
+
+    /**
+     * 删除流程
+     *
+     * @param auditTypeEnum 业务类型
+     * @param bizIds        业务ID
+     */
+    void batchDelProcess(AuditTypeEnum auditTypeEnum, Collection<Long> bizIds);
 }

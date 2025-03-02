@@ -24,7 +24,7 @@ public class BusinessOrderController extends BaseController {
 
     @GetMapping("/pageQuery")
     public TableDataInfo pageQuery(BusinessOrderQueryDto queryDto) {
-        return getDataTable(businessOrderService.pageQuery(queryDto));
+        return businessOrderService.pageQuery(queryDto);
     }
 
     @RepeatSubmit

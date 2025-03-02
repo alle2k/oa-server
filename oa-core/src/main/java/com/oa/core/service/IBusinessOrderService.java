@@ -1,6 +1,7 @@
 package com.oa.core.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.oa.common.core.page.TableDataInfo;
 import com.oa.common.error.BaseCode;
 import com.oa.common.exception.ServiceException;
 import com.oa.core.domain.BusinessOrder;
@@ -8,7 +9,6 @@ import com.oa.core.enums.DeletedEnum;
 import com.oa.core.model.dto.BusinessOrderQueryDto;
 import com.oa.core.model.dto.BusinessOrderSaveDto;
 import com.oa.core.model.dto.BusinessOrderUpdDto;
-import com.oa.core.model.vo.BusinessOrderShortVo;
 
 import java.util.List;
 import java.util.Objects;
@@ -26,9 +26,9 @@ public interface IBusinessOrderService extends IService<BusinessOrder> {
      * 分页查询订单
      *
      * @param queryDto 查询域条件
-     * @return List
+     * @return TableDataInfo
      */
-    List<BusinessOrderShortVo> pageQuery(BusinessOrderQueryDto queryDto);
+    TableDataInfo pageQuery(BusinessOrderQueryDto queryDto);
 
     /**
      * 修改订单

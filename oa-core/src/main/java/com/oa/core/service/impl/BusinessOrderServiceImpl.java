@@ -6,11 +6,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.oa.common.annotation.MultiTransactional;
 import com.oa.common.core.domain.entity.SysUser;
+import com.oa.common.core.page.TableDataInfo;
 import com.oa.common.utils.OrikaMapperUtils;
 import com.oa.common.utils.SecurityUtils;
 import com.oa.common.utils.StringUtils;
 import com.oa.core.domain.ApprovalSubmissionRecord;
 import com.oa.core.domain.BusinessOrder;
+import com.oa.core.enums.ApprovalSubmissionRecordStatusEnum;
 import com.oa.core.enums.AuditTypeEnum;
 import com.oa.core.enums.DeletedEnum;
 import com.oa.core.mapper.master.BusinessOrderMapper;
@@ -69,16 +71,16 @@ public class BusinessOrderServiceImpl extends ServiceImpl<BusinessOrderMapper, B
     }
 
     @Override
-    public List<BusinessOrderShortVo> pageQuery(BusinessOrderQueryDto queryDto) {
+    public TableDataInfo pageQuery(BusinessOrderQueryDto queryDto) {
         Page<BusinessOrder> page = getBaseMapper().pageQuery(new Page<>(queryDto.getPageNum(), queryDto.getPageSize()), queryDto);
         List<BusinessOrder> list = page.getRecords();
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.emptyList();
+            return new TableDataInfo();
         }
         Map<Long, String> userMap = sysUserService.listByIds(list.stream().map(BusinessOrder::getCreateUser).collect(Collectors.toList()))
                 .stream().collect(Collectors.toMap(SysUser::getUserId, SysUser::getNickName));
         boolean userMapEmptyFlag = CollectionUtils.isEmpty(userMap);
-        return list.stream().map(x -> {
+        return new TableDataInfo(list.stream().map(x -> {
             BusinessOrderShortVo resultVo = OrikaMapperUtils.map(x, BusinessOrderShortVo.class);
             if (!userMapEmptyFlag) {
                 resultVo.setCreateUserName(userMap.getOrDefault(x.getCreateUser(), StringUtils.EMPTY));
@@ -92,7 +94,7 @@ public class BusinessOrderServiceImpl extends ServiceImpl<BusinessOrderMapper, B
                 resultVo.setPaymentScreenshotList(Arrays.stream(x.getPaymentScreenshot().split(",")).collect(Collectors.toList()));
             }
             return resultVo;
-        }).collect(Collectors.toList());
+        }).collect(Collectors.toList()), page.getTotal());
     }
 
     @MultiTransactional
@@ -115,6 +117,7 @@ public class BusinessOrderServiceImpl extends ServiceImpl<BusinessOrderMapper, B
         }
         entity.setUpdateUser(SecurityUtils.getUserId());
         entity.setUpdateTime(new Date());
+        entity.setApprovalStatus(ApprovalSubmissionRecordStatusEnum.AUDIT.getCode());
         updateById(entity);
         flowableService.invokeProcessResubmitAfter(entity.getId(), AuditTypeEnum.APPROVAL_BUSINESS_ORDER, updDto.getRemark());
     }

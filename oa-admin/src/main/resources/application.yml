@@ -28,6 +28,7 @@ server:
 # 日志配置
 logging:
   level:
+    root: info
     com.oa: debug
     org.springframework: warn
     org.flowable: info

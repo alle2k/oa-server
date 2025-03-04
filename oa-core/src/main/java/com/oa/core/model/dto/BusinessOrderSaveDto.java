@@ -3,10 +3,7 @@ package com.oa.core.model.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
@@ -61,4 +58,12 @@ public class BusinessOrderSaveDto {
      * 打款截图
      */
     private List<String> paymentScreenshotList;
+
+    /**
+     * 业务类型
+     *
+     * @see com.oa.core.enums.BusinessOrderItemBizTypeEnum
+     */
+    @NotEmpty
+    private List<Integer> bizTypeList;
 }

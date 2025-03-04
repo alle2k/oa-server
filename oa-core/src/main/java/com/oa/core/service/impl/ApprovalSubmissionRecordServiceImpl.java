@@ -16,7 +16,7 @@ import com.oa.core.helper.GenerateAuditNoHelper;
 import com.oa.core.mapper.master.ApprovalSubmissionRecordMapper;
 import com.oa.core.model.dto.ApprovalSubmissionRecordSaveDto;
 import com.oa.core.model.vo.BizDetailVo;
-import com.oa.core.model.vo.BusinessOrderShortVo;
+import com.oa.core.model.vo.BusinessOrderDetailVo;
 import com.oa.core.service.FlowableService;
 import com.oa.core.service.IApprovalSubmissionRecordService;
 import com.oa.core.service.IBusinessOrderService;
@@ -69,10 +69,10 @@ public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSub
         switch (auditTypeEnum) {
             case APPROVAL_BUSINESS_ORDER:
                 BusinessOrder businessOrder = businessOrderService.selectOneById(bizId);
-                BusinessOrderShortVo businessOrderShortVo = OrikaMapperUtils.map(businessOrder, BusinessOrderShortVo.class);
-                businessOrderShortVo.setAnnexUrlList(StringUtils.str2List(businessOrderShortVo.getAnnexUrl()));
-                businessOrderShortVo.setPaymentScreenshotList(StringUtils.str2List(businessOrderShortVo.getPaymentScreenshot()));
-                result = new BizDetailVo<>(businessOrderShortVo);
+                BusinessOrderDetailVo businessOrderDetailVo = OrikaMapperUtils.map(businessOrder, BusinessOrderDetailVo.class);
+                businessOrderDetailVo.setAnnexUrlList(StringUtils.str2List(businessOrderDetailVo.getAnnexUrl()));
+                businessOrderDetailVo.setPaymentScreenshotList(StringUtils.str2List(businessOrderDetailVo.getPaymentScreenshot()));
+                result = new BizDetailVo<>(businessOrderDetailVo);
                 break;
             default:
                 result = new BizDetailVo<>();

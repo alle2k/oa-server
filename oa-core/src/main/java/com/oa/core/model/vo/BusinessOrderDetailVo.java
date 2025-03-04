@@ -7,7 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 @Data
-public class BusinessOrderShortVo {
+public class BusinessOrderDetailVo {
 
     /**
      * PK
@@ -100,4 +100,9 @@ public class BusinessOrderShortVo {
      * 创建时间
      */
     private Date createTime;
+
+    /**
+     * 服务内容列表
+     */
+    private List<BusinessOrderItemDetailVo> itemList;
 }

@@ -26,6 +26,12 @@ public class BusinessOrder {
     private String auditNo;
 
     /**
+     * 部门ID
+     */
+    @TableField("dept_id")
+    private Long deptId;
+
+    /**
      * 付款时间
      */
     @TableField("payment_time")

@@ -7,6 +7,7 @@
     <resultMap type="businessOrder" id="businessOrderResultMap">
         <id property="id" column="id"/>
         <result property="auditNo" column="audit_no"/>
+        <result property="deptId" column="dept_id"/>
         <result property="paymentTime" column="payment_time"/>
         <result property="companyName" column="company_name"/>
         <result property="companyContactUserName" column="company_contact_user_name"/>
@@ -27,7 +28,7 @@
 
     <sql id="baseColumn">
         id
-        , audit_no, payment_time, company_name, company_contact_user_name, company_contact_user_tel, amount, performance, remark, annex_url, payment_screenshot, approval_status, approval_time, deleted, create_user, create_time, update_user, update_time
+        , audit_no, dept_id, payment_time, company_name, company_contact_user_name, company_contact_user_tel, amount, performance, remark, annex_url, payment_screenshot, approval_status, approval_time, deleted, create_user, create_time, update_user, update_time
     </sql>
 
     <select id="pageQuery" resultType="businessOrder">

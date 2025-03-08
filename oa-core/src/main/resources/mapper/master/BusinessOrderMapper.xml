@@ -47,6 +47,19 @@
             <if test="null != param.companyName and param.companyName != ''">
                 and company_name = #{param.companyName}
             </if>
+            <if test="null != param.dataPermission and null != param.dataPermission.dataScope and param.dataPermission.dataScope != ''">
+                <choose>
+                    <when test="param.dataPermission.dataScope == '3'.toString() or param.dataPermission.dataScope == '4'.toString()">
+                        and dept_id IN
+                        <foreach collection="param.dataPermission.deptIds" item="item" open="(" close=")" separator=", ">
+                            #{item}
+                        </foreach>
+                    </when>
+                    <when test="param.dataPermission.dataScope == '5'.toString()">
+                        and create_user = #{param.loginUser}
+                    </when>
+                </choose>
+            </if>
             and deleted = 0
         </where>
         order by create_time desc

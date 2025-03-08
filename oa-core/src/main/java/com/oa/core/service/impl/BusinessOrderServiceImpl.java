@@ -67,6 +67,7 @@ public class BusinessOrderServiceImpl extends ServiceImpl<BusinessOrderMapper, B
         if (!CollectionUtils.isEmpty(paymentScreenshotList)) {
             entity.setPaymentScreenshot(String.join(",", paymentScreenshotList));
         }
+        entity.setDeptId(SecurityUtils.getDeptId());
         entity.setCreateUser(userId);
         entity.setUpdateUser(userId);
         save(entity);
@@ -86,6 +87,7 @@ public class BusinessOrderServiceImpl extends ServiceImpl<BusinessOrderMapper, B
 
     @Override
     public TableDataInfo pageQuery(BusinessOrderQueryDto queryDto) {
+        queryDto.setDataPermission(SecurityUtils.getLoginUser().getDataPermissionDto());
         Page<BusinessOrder> page = getBaseMapper().pageQuery(new Page<>(queryDto.getPageNum(), queryDto.getPageSize()), queryDto);
         List<BusinessOrder> list = page.getRecords();
         if (CollectionUtils.isEmpty(list)) {

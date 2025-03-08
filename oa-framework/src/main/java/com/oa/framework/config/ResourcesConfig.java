@@ -1,7 +1,9 @@
 package com.oa.framework.config;
 
-import java.util.concurrent.TimeUnit;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.oa.common.config.OaConfig;
+import com.oa.common.constant.Constants;
+import com.oa.framework.interceptor.LoginInterceptor;
+import com.oa.framework.interceptor.RepeatSubmitInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.CacheControl;
@@ -11,24 +13,22 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import com.oa.common.config.OaConfig;
-import com.oa.common.constant.Constants;
-import com.oa.framework.interceptor.RepeatSubmitInterceptor;
+
+import javax.annotation.Resource;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 通用配置
- * 
- *
  */
 @Configuration
-public class ResourcesConfig implements WebMvcConfigurer
-{
-    @Autowired
+public class ResourcesConfig implements WebMvcConfigurer {
+    @Resource
+    private LoginInterceptor loginInterceptor;
+    @Resource
     private RepeatSubmitInterceptor repeatSubmitInterceptor;
 
     @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry)
-    {
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
         /** 本地文件上传路径 */
         registry.addResourceHandler(Constants.RESOURCE_PREFIX + "/**")
                 .addResourceLocations("file:" + OaConfig.getProfile() + "/");
@@ -43,17 +43,26 @@ public class ResourcesConfig implements WebMvcConfigurer
      * 自定义拦截规则
      */
     @Override
-    public void addInterceptors(InterceptorRegistry registry)
-    {
+    public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(repeatSubmitInterceptor).addPathPatterns("/**");
+        registry.addInterceptor(loginInterceptor)
+                .addPathPatterns("/**")
+                .excludePathPatterns("/*/api-docs")
+                .excludePathPatterns("/webjars/**")
+                .excludePathPatterns("/druid/**")
+                .excludePathPatterns("/swagger**")
+                .excludePathPatterns("/swagger-resources/**")
+                .excludePathPatterns("/profile/**")
+                .excludePathPatterns("/login")
+                .excludePathPatterns("/register")
+                .excludePathPatterns("/captchaImage");
     }
 
     /**
      * 跨域配置
      */
     @Bean
-    public CorsFilter corsFilter()
-    {
+    public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         // 设置访问源地址

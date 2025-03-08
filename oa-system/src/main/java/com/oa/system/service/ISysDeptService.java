@@ -146,4 +146,20 @@ public interface ISysDeptService extends IService<SysDept> {
      * @return List
      */
     Set<Long> recursiveGetDeptLeader(Collection<Long> deptIds);
+
+    /**
+     * 根据部门ID获取该部门下所有用户ID集合
+     *
+     * @param deptId 部门ID
+     * @return 该部门下的所有用户ID集合
+     */
+    Set<Long> fetchDeptUserIds(Long deptId);
+
+    /**
+     * 递归获取指定部门及其所有子部门的ID集合。
+     *
+     * @param deptId 指定的部门ID
+     * @return 包含指定部门及其所有子部门ID的集合
+     */
+    Set<Long> recursiveDownGetDeptIds(Long deptId);
 }

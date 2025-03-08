@@ -1,8 +1,10 @@
 package com.oa.system.service;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.oa.common.core.domain.entity.SysUser;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -202,4 +204,16 @@ public interface ISysUserService extends IService<SysUser> {
      * @return 结果
      */
     String importUser(List<SysUser> userList, Boolean isUpdateSupport, String operName);
+
+    /**
+     * 查询指定部门ID集合下的用户列表。
+     *
+     * @param deptIds 部门ID集合
+     * @return 指定部门ID集合下的用户列表
+     */
+    default List<SysUser> selectListByDeptIds(Collection<Long> deptIds) {
+        return list(Wrappers.<SysUser>lambdaQuery()
+                .in(SysUser::getDeptId, deptIds)
+                .ne(SysUser::getDelFlag, 2));
+    }
 }

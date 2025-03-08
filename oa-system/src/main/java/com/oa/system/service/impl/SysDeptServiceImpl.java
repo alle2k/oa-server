@@ -15,10 +15,12 @@ import com.oa.common.utils.spring.SpringUtils;
 import com.oa.system.mapper.master.SysDeptMapper;
 import com.oa.system.mapper.master.SysRoleMapper;
 import com.oa.system.service.ISysDeptService;
+import com.oa.system.service.ISysUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,6 +34,9 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
 
     @Autowired
     private SysRoleMapper roleMapper;
+
+    @Resource
+    private ISysUserService userService;
 
     /**
      * 查询部门管理数据
@@ -326,5 +331,54 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
         leaderIds.addAll(deptList.stream().map(SysDept::getLeader).collect(Collectors.toList()));
         doRecursiveGetDeptLeader(deptList.stream().map(SysDept::getParentId)
                 .filter(x -> x > 0).collect(Collectors.toList()), leaderIds);
+    }
+
+    @Override
+    public Set<Long> fetchDeptUserIds(Long deptId) {
+        Set<Long> deptIds = recursiveDownGetDeptIds(deptId);
+        if (CollectionUtils.isEmpty(deptIds)) {
+            return Collections.emptySet();
+        }
+        List<SysUser> userList = userService.selectListByDeptIds(deptIds);
+        if (CollectionUtils.isEmpty(userList)) {
+            return Collections.emptySet();
+        }
+        return userList.stream().map(SysUser::getUserId).collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<Long> recursiveDownGetDeptIds(Long deptId) {
+        if (Objects.isNull(deptId)) {
+            deptId = 0L;
+        }
+        Map<Long, List<SysDept>> deptMap = list().stream().filter(x -> !x.getDelFlag().equals("2")).collect(Collectors.toList())
+                .stream().collect(Collectors.groupingBy(SysDept::getParentId));
+        if (CollectionUtils.isEmpty(deptMap)) {
+            return Collections.emptySet();
+        }
+        Set<Long> matchDeptIds = new HashSet<>();
+        matchDeptIds.add(deptId);
+        recursiveDownGetDeptIds(deptMap, deptMap.get(deptId), matchDeptIds);
+        return matchDeptIds;
+    }
+
+    /**
+     * Recursively traverses a department hierarchy and collects the IDs of all departments.
+     * The traversal starts from the given list of departments, and for each department,
+     * it adds the department's ID to the result collection and then continues to traverse
+     * its child departments.
+     *
+     * @param deptMap   A map where the key is the department ID and the value is a list of child departments.
+     * @param deptList  The list of departments to start the recursive traversal from.
+     * @param resultIds The collection that will hold the IDs of all traversed departments.
+     */
+    private void recursiveDownGetDeptIds(Map<Long, List<SysDept>> deptMap, Collection<SysDept> deptList, Collection<Long> resultIds) {
+        if (CollectionUtils.isEmpty(deptList)) {
+            return;
+        }
+        deptList.forEach(x -> {
+            resultIds.add(x.getDeptId());
+            recursiveDownGetDeptIds(deptMap, deptMap.get(x.getDeptId()), resultIds);
+        });
     }
 }

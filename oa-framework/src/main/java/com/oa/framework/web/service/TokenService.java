@@ -8,7 +8,6 @@ import com.oa.common.utils.ServletUtils;
 import com.oa.common.utils.StringUtils;
 import com.oa.common.utils.ip.AddressUtils;
 import com.oa.common.utils.ip.IpUtils;
-import com.oa.common.utils.uuid.IdUtils;
 import eu.bitwalker.useragentutils.UserAgent;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -64,10 +63,9 @@ public class TokenService {
             try {
                 Claims claims = parseToken(token);
                 // 解析对应的权限以及用户信息
-                String uuid = (String) claims.get(Constants.LOGIN_USER_KEY);
-                String userKey = getTokenKey(uuid);
-                LoginUser user = redisCache.getCacheObject(userKey, LoginUser.class);
-                return user;
+                Integer userId = (Integer) claims.get(Constants.LOGIN_USER_KEY);
+                String userKey = getTokenKey(Long.valueOf(userId));
+                return redisCache.getCacheObject(userKey, LoginUser.class);
             } catch (Exception e) {
                 log.error("获取用户信息异常'{}'", e.getMessage());
             }
@@ -87,9 +85,9 @@ public class TokenService {
     /**
      * 删除用户身份信息
      */
-    public void delLoginUser(String token) {
-        if (StringUtils.isNotEmpty(token)) {
-            String userKey = getTokenKey(token);
+    public void delLoginUser(Long userId) {
+        if (StringUtils.isNotNull(userId)) {
+            String userKey = getTokenKey(userId);
             redisCache.deleteObject(userKey);
         }
     }
@@ -101,14 +99,16 @@ public class TokenService {
      * @return 令牌
      */
     public String createToken(LoginUser loginUser) {
-        String token = IdUtils.fastUUID();
-        loginUser.setToken(token);
+        redisCache.deleteObject(getTokenKey(loginUser.getUserId()));
         setUserAgent(loginUser);
-        refreshToken(loginUser);
 
         Map<String, Object> claims = new HashMap<>();
-        claims.put(Constants.LOGIN_USER_KEY, token);
-        return createToken(claims);
+        claims.put(Constants.LOGIN_USER_KEY, loginUser.getUserId());
+        claims.put("timestamp", System.currentTimeMillis());
+        String token = createToken(claims);
+        loginUser.setToken(token);
+        refreshToken(loginUser);
+        return token;
     }
 
     /**
@@ -134,7 +134,7 @@ public class TokenService {
         loginUser.setLoginTime(System.currentTimeMillis());
         loginUser.setExpireTime(loginUser.getLoginTime() + expireTime * MILLIS_MINUTE);
         // 根据uuid将loginUser缓存
-        String userKey = getTokenKey(loginUser.getToken());
+        String userKey = getTokenKey(loginUser.getUserId());
         redisCache.setCacheObject(userKey, loginUser, expireTime, TimeUnit.MINUTES);
     }
 
@@ -195,7 +195,7 @@ public class TokenService {
      * @param request
      * @return token
      */
-    private String getToken(HttpServletRequest request) {
+    public String getToken(HttpServletRequest request) {
         String token = request.getHeader(header);
         if (StringUtils.isNotEmpty(token) && token.startsWith(Constants.TOKEN_PREFIX)) {
             token = token.replace(Constants.TOKEN_PREFIX, "");
@@ -203,7 +203,7 @@ public class TokenService {
         return token;
     }
 
-    private String getTokenKey(String uuid) {
+    private String getTokenKey(Long uuid) {
         return CacheConstants.LOGIN_TOKEN_KEY + uuid;
     }
 }

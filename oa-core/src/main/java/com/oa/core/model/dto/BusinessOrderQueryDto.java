@@ -1,5 +1,6 @@
 package com.oa.core.model.dto;
 
+import com.oa.common.core.domain.model.DataPermissionDto;
 import com.oa.common.core.page.PageDomain;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -29,4 +30,6 @@ public class BusinessOrderQueryDto extends PageDomain {
      * 甲方公司名称
      */
     private String companyName;
+
+    private DataPermissionDto dataPermission;
 }

@@ -2,7 +2,6 @@ package com.oa.common.core.domain.model;
 
 import com.alibaba.fastjson2.annotation.JSONField;
 import com.oa.common.core.domain.entity.SysUser;
-import io.swagger.annotations.ApiModelProperty;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -69,6 +68,11 @@ public class LoginUser implements UserDetails {
      * 用户信息
      */
     private SysUser user;
+
+    /**
+     * 数据权限
+     */
+    private DataPermissionDto dataPermissionDto;
 
     public LoginUser() {
     }
@@ -224,6 +228,14 @@ public class LoginUser implements UserDetails {
 
     public void setUser(SysUser user) {
         this.user = user;
+    }
+
+    public DataPermissionDto getDataPermissionDto() {
+        return dataPermissionDto;
+    }
+
+    public void setDataPermissionDto(DataPermissionDto dataPermissionDto) {
+        this.dataPermissionDto = dataPermissionDto;
     }
 
     @Override

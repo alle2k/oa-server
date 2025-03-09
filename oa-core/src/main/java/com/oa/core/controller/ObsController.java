@@ -2,6 +2,8 @@ package com.oa.core.controller;
 
 import com.oa.common.core.controller.BaseController;
 import com.oa.common.core.domain.AjaxResult;
+import com.oa.common.error.BaseCode;
+import com.oa.common.exception.ServiceException;
 import com.oa.common.utils.ObsUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -25,12 +27,11 @@ public class ObsController extends BaseController {
     @ApiOperation("文件上传")
     public AjaxResult upload(MultipartFile file,
                              @RequestParam(value = "folder", required = false) String folder) {
-        InputStream input = null;
-        try {
-            input = new ByteArrayInputStream(file.getBytes());
+        try (InputStream input = new ByteArrayInputStream(file.getBytes())) {
+            return success((Object) ObsUtils.upload(input, folder, file.getOriginalFilename()));
         } catch (Exception e) {
             log.error("上传文件失败", e);
         }
-        return success((Object) ObsUtils.upload(input, folder, file.getOriginalFilename()));
+        throw new ServiceException(BaseCode.SYSTEM_FAILED);
     }
 }

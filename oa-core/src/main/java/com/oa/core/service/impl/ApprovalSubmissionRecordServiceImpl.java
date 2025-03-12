@@ -53,7 +53,7 @@ public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSub
         approvalRecord.setRemark(record.getRemark());
         // 获取当前登录人部门id
         approvalRecord.setApplyUserDeptId(String.valueOf(loginUser.getDeptId()));
-        approvalRecord.setAuditNo(generateAuditNoHelper.get());
+        approvalRecord.setAuditNo(String.format("%s-%s", record.getAuditTypeEnum().getPrefix(), generateAuditNoHelper.get()));
         save(approvalRecord);
         return approvalRecord.getAuditNo();
     }

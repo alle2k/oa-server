@@ -3,6 +3,7 @@ package com.oa.core.enums;
 import com.oa.common.utils.spring.SpringUtils;
 import com.oa.core.processor.AbstractAuditBizProcessor;
 import com.oa.core.processor.BusinessOrderAuditProcessor;
+import com.oa.core.processor.OrderAccountAgencyAuditProcessor;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +16,8 @@ import java.util.stream.Collectors;
 @Getter
 public enum AuditTypeEnum {
 
-    APPROVAL_BUSINESS_ORDER(1001, "businessOrder", "提交订单申请", BusinessOrderAuditProcessor.class),
+    APPROVAL_BUSINESS_ORDER(1001, "businessOrder", "提交订单申请", BusinessOrderAuditProcessor.class, "BO"),
+    APPROVAL_ACCOUNT_AGENCY(1002, "accountAgency", "代理记账申请", OrderAccountAgencyAuditProcessor.class, "AA"),
     ;
 
     public final static Map<Integer, AuditTypeEnum> codeMap;
@@ -26,6 +28,7 @@ public enum AuditTypeEnum {
      * spring容器中的bean名, 实现 IAuditProcessor
      */
     private final Class<? extends AbstractAuditBizProcessor> processor;
+    private final String prefix;
 
     public static AbstractAuditBizProcessor getProcessorBean(Integer code) {
         return SpringUtils.getBean(codeMap.get(code).getProcessor());

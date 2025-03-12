@@ -62,6 +62,18 @@ public class BusinessOrder {
     private BigDecimal amount;
 
     /**
+     * 已使用金额
+     */
+    @TableField("used_amount")
+    private BigDecimal usedAmount;
+
+    /**
+     * 剩余可用金额
+     */
+    @TableField("free_amount")
+    private BigDecimal freeAmount;
+
+    /**
      * 业绩
      */
     @TableField("performance")

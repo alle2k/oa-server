@@ -13,6 +13,8 @@
         <result property="companyContactUserName" column="company_contact_user_name"/>
         <result property="companyContactUserTel" column="company_contact_user_tel"/>
         <result property="amount" column="amount"/>
+        <result property="usedAmount" column="used_amount"/>
+        <result property="freeAmount" column="free_amount"/>
         <result property="performance" column="performance"/>
         <result property="annexUrl" column="annex_url"/>
         <result property="paymentScreenshot" column="payment_screenshot"/>
@@ -28,7 +30,7 @@
 
     <sql id="baseColumn">
         id
-        , audit_no, dept_id, payment_time, company_name, company_contact_user_name, company_contact_user_tel, amount, performance, remark, annex_url, payment_screenshot, approval_status, approval_time, deleted, create_user, create_time, update_user, update_time
+        , audit_no, dept_id, payment_time, company_name, company_contact_user_name, company_contact_user_tel, amount, used_amount, free_amount, performance, remark, annex_url, payment_screenshot, approval_status, approval_time, deleted, create_user, create_time, update_user, update_time
     </sql>
 
     <select id="pageQuery" resultType="businessOrder">

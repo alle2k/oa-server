@@ -54,5 +54,6 @@ public abstract class AbstractAuditBizProcessor {
      * @param bizId 业务ID
      * @param obj   需要更新的信息
      */
-    public abstract void invoke(Long bizId, Object obj);
+    public void invoke(Long bizId, Object obj) {
+    }
 }

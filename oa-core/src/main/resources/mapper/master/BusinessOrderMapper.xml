@@ -62,6 +62,12 @@
                     </when>
                 </choose>
             </if>
+            <if test="null != param.ids and param.ids.size > 0">
+                and id in
+                <foreach collection="param.ids" separator=", " open="(" close=")" item="item">
+                    #{item}
+                </foreach>
+            </if>
             and deleted = 0
         </where>
         order by create_time desc

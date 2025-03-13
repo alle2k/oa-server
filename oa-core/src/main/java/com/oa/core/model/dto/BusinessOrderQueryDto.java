@@ -5,6 +5,8 @@ import com.oa.common.core.page.PageDomain;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.Collection;
+
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class BusinessOrderQueryDto extends PageDomain {
@@ -32,4 +34,16 @@ public class BusinessOrderQueryDto extends PageDomain {
     private String companyName;
 
     private DataPermissionDto dataPermission;
+
+    /**
+     * 业务类型
+     *
+     * @see com.oa.core.enums.BusinessOrderItemBizTypeEnum
+     */
+    private Integer bizType;
+
+    /**
+     * 业务订单ID列表
+     */
+    private Collection<Long> ids;
 }

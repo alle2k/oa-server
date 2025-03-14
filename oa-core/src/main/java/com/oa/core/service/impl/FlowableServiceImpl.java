@@ -27,7 +27,6 @@ import com.oa.core.model.vo.NodeCommentVO;
 import com.oa.core.processor.AbstractAuditBizProcessor;
 import com.oa.core.service.FlowableService;
 import com.oa.core.service.IApprovalSubmissionRecordService;
-import com.oa.core.service.IBusinessOrderService;
 import com.oa.core.service.ITaskTransferLogService;
 import com.oa.flowable.constants.FlowableConstants;
 import com.oa.flowable.enums.CandidateTypeEnum;
@@ -95,8 +94,6 @@ public class FlowableServiceImpl implements FlowableService {
     private ITaskTransferLogService taskTransferLogService;
     @Resource
     private AuditMapper auditMapper;
-    @Resource
-    private IBusinessOrderService businessOrderService;
     @Resource
     private ISysUserService sysUserService;
 

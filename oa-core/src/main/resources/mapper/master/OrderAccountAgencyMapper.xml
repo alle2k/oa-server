@@ -27,4 +27,53 @@
         , audit_no, order_id, amount, service_begin_date, service_end_date, annex_url, approval_status, approval_time, remark, deleted, create_user, create_time, update_user, update_time
     </sql>
 
+    <select id="pageQuery" resultType="com.oa.core.model.vo.AccountAgencyDetailVo">
+        select t1.id,
+               t1.audit_no                  auditNo,
+               t1.order_id                  orderId,
+               t1.amount,
+               t1.service_begin_date        serviceBeginDate,
+               t1.service_end_date          serviceEndDate,
+               t1.approval_status           approvalStatus,
+               t1.approval_time             approvalTime,
+               t1.create_user               createUser,
+               t1.create_time               createTime,
+               t2.audit_no                  orderAuditNo,
+               t2.dept_id                   deptId,
+               t2.payment_time              paymentTime,
+               t2.company_name              companyName,
+               t2.company_contact_user_name companyContactUserName,
+               t2.company_contact_user_tel  companyContactUserTel,
+               t2.amount                    orderAmount,
+               t2.used_amount               usedAmount,
+               t2.free_amount               freeAmount
+        from order_account_agency t1,
+             business_order t2
+        where t1.order_id = t2.id
+          and t1.deleted = 0
+          and t2.deleted = 0
+          <if test="null != param.auditNo and param.auditNo != ''">
+              and t1.audit_no = #{param.auditNo}
+          </if>
+          <if test="null != param.createUser">
+              and t1.create_user = #{param.createUser}
+          </if>
+          <if test="null != param.approvalStatus">
+              and t1.approval_status = #{param.approvalStatus}
+          </if>
+          <if test="null != param.dataPermission and null != param.dataPermission.dataScope and param.dataPermission.dataScope != ''">
+              <choose>
+                  <when test="param.dataPermission.dataScope == '3'.toString() or param.dataPermission.dataScope == '4'.toString()">
+                      and t2.dept_id IN
+                      <foreach collection="param.dataPermission.deptIds" item="item" open="(" close=")" separator=", ">
+                          #{item}
+                      </foreach>
+                  </when>
+                  <when test="param.dataPermission.dataScope == '5'.toString()">
+                      and t2.create_user = #{param.loginUser}
+                  </when>
+              </choose>
+          </if>
+        order by t1.create_time desc
+    </select>
 </mapper>

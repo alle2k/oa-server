@@ -1,6 +1,7 @@
 package com.oa.core.processor;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.oa.common.exception.ServiceException;
 import com.oa.core.domain.BusinessOrder;
 import com.oa.core.enums.ApprovalSubmissionRecordStatusEnum;
 import com.oa.core.model.dto.AuditFormBusinessOrderDto;
@@ -31,6 +32,10 @@ public class BusinessOrderAuditProcessor extends AbstractAuditBizProcessor {
 
     @Override
     public void whenPass(Long bizId) {
+        BusinessOrder entity = businessOrderService.selectOneById(bizId);
+        if (entity.getPerformance().compareTo(entity.getAmount()) > 0) {
+            throw new ServiceException("业绩不能超过合同金额");
+        }
         businessOrderService.update(Wrappers.<BusinessOrder>lambdaUpdate()
                 .set(BusinessOrder::getApprovalTime, new Date())
                 .set(BusinessOrder::getApprovalStatus, ApprovalSubmissionRecordStatusEnum.PASS.getCode())

@@ -1,8 +1,10 @@
 package com.oa.core.processor;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.oa.core.domain.BusinessOrder;
 import com.oa.core.domain.OrderAccountAgency;
 import com.oa.core.enums.ApprovalSubmissionRecordStatusEnum;
+import com.oa.core.service.IBusinessOrderService;
 import com.oa.core.service.IOrderAccountAgencyService;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +19,8 @@ public class OrderAccountAgencyAuditProcessor extends AbstractAuditBizProcessor 
 
     @Resource
     private IOrderAccountAgencyService orderAccountAgencyService;
+    @Resource
+    private IBusinessOrderService businessOrderService;
 
     @Override
     public String getAuditNoByBizId(Long bizId) {
@@ -38,14 +42,24 @@ public class OrderAccountAgencyAuditProcessor extends AbstractAuditBizProcessor 
 
     @Override
     public void whenReject(Long bizId) {
+        releaseOrderAmount(orderAccountAgencyService.selectOneById(bizId));
         orderAccountAgencyService.update(Wrappers.<OrderAccountAgency>lambdaUpdate()
                 .set(OrderAccountAgency::getApprovalTime, new Date())
                 .set(OrderAccountAgency::getApprovalStatus, ApprovalSubmissionRecordStatusEnum.REJECT.getCode())
                 .eq(OrderAccountAgency::getId, bizId));
     }
 
+    private void releaseOrderAmount(OrderAccountAgency entity) {
+        BusinessOrder businessOrder = businessOrderService.selectOneById(entity.getOrderId());
+        businessOrder.setUsedAmount(businessOrder.getUsedAmount().subtract(entity.getAmount()));
+        businessOrder.setFreeAmount(businessOrder.getFreeAmount().add(entity.getAmount()));
+        businessOrder.setUpdateTime(new Date());
+        businessOrderService.updateById(businessOrder);
+    }
+
     @Override
     public void whenRevoke(Long bizId, ApprovalSubmissionRecordStatusEnum statusEnum) {
+        releaseOrderAmount(orderAccountAgencyService.selectOneById(bizId));
         orderAccountAgencyService.update(Wrappers.<OrderAccountAgency>lambdaUpdate()
                 .set(OrderAccountAgency::getApprovalStatus, statusEnum.getCode())
                 .eq(OrderAccountAgency::getId, bizId));

@@ -10,16 +10,19 @@ import com.oa.common.utils.SecurityUtils;
 import com.oa.common.utils.StringUtils;
 import com.oa.core.domain.ApprovalSubmissionRecord;
 import com.oa.core.domain.BusinessOrder;
+import com.oa.core.domain.OrderAccountAgency;
 import com.oa.core.enums.ApprovalSubmissionRecordStatusEnum;
 import com.oa.core.enums.AuditTypeEnum;
 import com.oa.core.helper.GenerateAuditNoHelper;
 import com.oa.core.mapper.master.ApprovalSubmissionRecordMapper;
 import com.oa.core.model.dto.ApprovalSubmissionRecordSaveDto;
+import com.oa.core.model.vo.AccountAgencyDetailVo;
 import com.oa.core.model.vo.BizDetailVo;
 import com.oa.core.model.vo.BusinessOrderDetailVo;
 import com.oa.core.service.FlowableService;
 import com.oa.core.service.IApprovalSubmissionRecordService;
 import com.oa.core.service.IBusinessOrderService;
+import com.oa.core.service.IOrderAccountAgencyService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +39,8 @@ public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSub
     private FlowableService flowableService;
     @Resource
     private IBusinessOrderService businessOrderService;
+    @Resource
+    private IOrderAccountAgencyService orderAccountAgencyService;
 
     @Transactional(TransactionConstant.MASTER)
     @Override
@@ -73,6 +78,20 @@ public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSub
                 businessOrderDetailVo.setAnnexUrlList(StringUtils.str2List(businessOrderDetailVo.getAnnexUrl()));
                 businessOrderDetailVo.setPaymentScreenshotList(StringUtils.str2List(businessOrderDetailVo.getPaymentScreenshot()));
                 result = new BizDetailVo<>(businessOrderDetailVo);
+                break;
+            case APPROVAL_ACCOUNT_AGENCY:
+                OrderAccountAgency accountAgency = orderAccountAgencyService.selectOneById(bizId);
+                BusinessOrder order = businessOrderService.selectOneById(accountAgency.getOrderId());
+                AccountAgencyDetailVo agencyDetailVo = OrikaMapperUtils.map(accountAgency, AccountAgencyDetailVo.class);
+                agencyDetailVo.setOrderAuditNo(order.getAuditNo());
+                agencyDetailVo.setPaymentTime(order.getPaymentTime());
+                agencyDetailVo.setCompanyName(order.getCompanyName());
+                agencyDetailVo.setCompanyContactUserName(order.getCompanyContactUserName());
+                agencyDetailVo.setCompanyContactUserTel(order.getCompanyContactUserTel());
+                agencyDetailVo.setOrderAmount(order.getAmount());
+                agencyDetailVo.setUsedAmount(order.getUsedAmount());
+                agencyDetailVo.setFreeAmount(order.getFreeAmount());
+                result = new BizDetailVo<>(agencyDetailVo);
                 break;
             default:
                 result = new BizDetailVo<>();

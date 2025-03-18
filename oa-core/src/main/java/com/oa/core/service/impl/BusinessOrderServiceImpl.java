@@ -35,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -67,6 +68,7 @@ public class BusinessOrderServiceImpl extends ServiceImpl<BusinessOrderMapper, B
         if (!CollectionUtils.isEmpty(paymentScreenshotList)) {
             entity.setPaymentScreenshot(String.join(",", paymentScreenshotList));
         }
+        entity.setFreeAmount(entity.getAmount());
         entity.setDeptId(SecurityUtils.getDeptId());
         entity.setCreateUser(userId);
         entity.setUpdateUser(userId);
@@ -159,6 +161,8 @@ public class BusinessOrderServiceImpl extends ServiceImpl<BusinessOrderMapper, B
         if (!CollectionUtils.isEmpty(updDto.getPaymentScreenshotList())) {
             entity.setPaymentScreenshot(String.join(",", updDto.getPaymentScreenshotList()));
         }
+        entity.setUsedAmount(BigDecimal.ZERO);
+        entity.setFreeAmount(entity.getAmount());
         entity.setUpdateUser(SecurityUtils.getUserId());
         entity.setUpdateTime(new Date());
         entity.setApprovalStatus(ApprovalSubmissionRecordStatusEnum.AUDIT.getCode());

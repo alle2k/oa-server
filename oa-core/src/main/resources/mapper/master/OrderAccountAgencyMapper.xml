@@ -61,6 +61,12 @@
           <if test="null != param.approvalStatus">
               and t1.approval_status = #{param.approvalStatus}
           </if>
+          <if test="null != param.approvalStatusList and param.approvalStatusList.size > 0">
+              and t1.approval_status in
+              <foreach collection="param.approvalStatusList" item="item" open="(" close=")" separator=", ">
+                  #{item}
+              </foreach>
+          </if>
           <if test="null != param.dataPermission and null != param.dataPermission.dataScope and param.dataPermission.dataScope != ''">
               <choose>
                   <when test="param.dataPermission.dataScope == '3'.toString() or param.dataPermission.dataScope == '4'.toString()">

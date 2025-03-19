@@ -5,6 +5,8 @@ import com.oa.common.core.page.PageDomain;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.List;
+
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class AccountAgencyQueryDto extends PageDomain {
@@ -25,6 +27,8 @@ public class AccountAgencyQueryDto extends PageDomain {
      * @see com.oa.core.enums.ApprovalSubmissionRecordStatusEnum
      */
     private Integer approvalStatus;
+
+    private List<Integer> approvalStatusList;
 
     private DataPermissionDto dataPermission;
 }

@@ -107,11 +107,11 @@ public class OrderAccountAgencyServiceImpl extends ServiceImpl<OrderAccountAgenc
         update(Wrappers.<OrderAccountAgency>lambdaUpdate()
                 .set(OrderAccountAgency::getDeleted, DeletedEnum.DELETED.getCode())
                 .in(OrderAccountAgency::getId, ids));
+        flowableService.batchDelProcess(AuditTypeEnum.APPROVAL_ACCOUNT_AGENCY, ids);
         approvalSubmissionRecordService.update(new LambdaUpdateWrapper<ApprovalSubmissionRecord>()
                 .in(ApprovalSubmissionRecord::getBizId, ids)
                 .eq(ApprovalSubmissionRecord::getAuditType, AuditTypeEnum.APPROVAL_ACCOUNT_AGENCY.getCode())
                 .set(ApprovalSubmissionRecord::getDeleted, DeletedEnum.DELETED.getCode()));
-        ids.forEach(x -> flowableService.delProcess(AuditTypeEnum.APPROVAL_ACCOUNT_AGENCY, x));
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.oa.common.core.page.PageDomain;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.Date;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -28,7 +29,18 @@ public class AccountAgencyQueryDto extends PageDomain {
      */
     private Integer approvalStatus;
 
+    /**
+     * 审批状态列表
+     */
     private List<Integer> approvalStatusList;
 
+    /**
+     * 数据权限信息
+     */
     private DataPermissionDto dataPermission;
+
+    /**
+     * 逾期标识
+     */
+    private Integer overdueFlag;
 }

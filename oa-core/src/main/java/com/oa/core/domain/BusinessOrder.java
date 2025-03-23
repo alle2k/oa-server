@@ -5,10 +5,12 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.Date;
 
+@NoArgsConstructor
 @Data
 @TableName("business_order")
 public class BusinessOrder {
@@ -140,4 +142,16 @@ public class BusinessOrder {
      */
     @TableField("update_time")
     private Date updateTime;
+
+    public BusinessOrder(String auditNo, String companyName, String companyContactUserName, String companyContactUserTel, BigDecimal amount, BigDecimal usedAmount, BigDecimal freeAmount,Integer approvalStatus, Date approvalTime) {
+        this.auditNo = auditNo;
+        this.companyName = companyName;
+        this.companyContactUserName = companyContactUserName;
+        this.companyContactUserTel = companyContactUserTel;
+        this.amount = amount;
+        this.usedAmount = usedAmount;
+        this.freeAmount = freeAmount;
+        this.approvalStatus = approvalStatus;
+        this.approvalTime = approvalTime;
+    }
 }

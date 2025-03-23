@@ -69,7 +69,7 @@ public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSub
         AuditTypeEnum auditTypeEnum = AuditTypeEnum.codeMap.get(auditType);
         ApprovalSubmissionRecord approvalSubmissionRecord = selectByBizIdAndAuditType(bizId, auditTypeEnum);
         if (Objects.isNull(approvalSubmissionRecord)) {
-            throw new ServiceException(BaseCode.DATA_NOT_EXIST);
+            return null;
         }
         switch (auditTypeEnum) {
             case APPROVAL_BUSINESS_ORDER:

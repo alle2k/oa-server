@@ -10,6 +10,16 @@
         <result column="amount" property="amount"/>
         <result column="service_begin_date" property="serviceBeginDate"/>
         <result column="service_end_date" property="serviceEndDate"/>
+        <result column="tax_no" property="taxNo"/>
+        <result column="company_nature" property="companyNature"/>
+        <result column="has_tax_ctrl" property="hasTaxCtrl"/>
+        <result column="id_card" property="idCard"/>
+        <result column="password" property="password"/>
+        <result column="register_tax_manager_phone" property="registerTaxManagerPhone"/>
+        <result column="individual_income_tax_password" property="individualIncomeTaxPassword"/>
+        <result column="company_detail" property="companyDetail"/>
+        <result column="sale" property="sale"/>
+        <result column="pay_period" property="payPeriod"/>
         <result column="annex_url" property="annexUrl"/>
         <result column="approval_status" property="approvalStatus"/>
         <result column="approval_time" property="approvalTime"/>
@@ -24,7 +34,7 @@
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         id
-        , audit_no, order_id, amount, service_begin_date, service_end_date, annex_url, approval_status, approval_time, remark, deleted, create_user, create_time, update_user, update_time
+        , audit_no, order_id, amount, service_begin_date, service_end_date, tax_no, company_nature, has_tax_ctrl, id_card, password, register_tax_manager_phone, individual_income_tax_password, company_detail, sale, pay_period, annex_url, approval_status, approval_time, remark, deleted, create_user, create_time, update_user, update_time
     </sql>
 
     <select id="pageQuery" resultType="com.oa.core.model.vo.AccountAgencyDetailVo">

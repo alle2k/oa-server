@@ -1,17 +1,17 @@
 package com.oa.core.domain;
 
-import java.math.BigDecimal;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
-import java.util.Date;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * @auther CodeGenerator
@@ -21,7 +21,7 @@ import lombok.Data;
 @Data
 @TableName("order_account_agency")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@ApiModel(value="OrderAccountAgency对象", description="代理记账")
+@ApiModel(value = "OrderAccountAgency对象", description = "代理记账")
 public class OrderAccountAgency implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -49,6 +49,37 @@ public class OrderAccountAgency implements Serializable {
     @ApiModelProperty(value = "服务结束时间")
     @TableField("service_end_date")
     private Date serviceEndDate;
+
+    @ApiModelProperty("税号")
+    @TableField("tax_no")
+    private String taxNo;
+    @ApiModelProperty("公司性质")
+    @TableField("company_nature")
+    private String companyNature;
+    @ApiModelProperty("是否有税控")
+    @TableField("has_tax_ctrl")
+    private String hasTaxCtrl;
+    @ApiModelProperty("身份证号码")
+    @TableField("id_card")
+    private String idCard;
+    @ApiModelProperty("密码")
+    @TableField("password")
+    private String password;
+    @ApiModelProperty("注册地税管员电话")
+    @TableField("register_tax_manager_phone")
+    private String registerTaxManagerPhone;
+    @ApiModelProperty("个税密码")
+    @TableField("individual_income_tax_password")
+    private String individualIncomeTaxPassword;
+    @ApiModelProperty("公司情况")
+    @TableField("company_detail")
+    private String companyDetail;
+    @ApiModelProperty("销售")
+    @TableField("sale")
+    private String sale;
+    @ApiModelProperty("付费周期")
+    @TableField("pay_period")
+    private String payPeriod;
 
     @ApiModelProperty(value = "附件")
     @TableField("annex_url")

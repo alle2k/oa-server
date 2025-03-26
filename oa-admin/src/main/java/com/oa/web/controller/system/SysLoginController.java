@@ -7,6 +7,7 @@ import com.oa.common.core.domain.entity.SysUser;
 import com.oa.common.core.domain.model.LoginBody;
 import com.oa.common.core.domain.model.LoginUser;
 import com.oa.common.utils.SecurityUtils;
+import com.oa.core.helper.CozeJWTOauthHelper;
 import com.oa.framework.web.service.SysLoginService;
 import com.oa.framework.web.service.SysPermissionService;
 import com.oa.framework.web.service.TokenService;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import java.util.List;
 import java.util.Set;
 
@@ -36,6 +38,9 @@ public class SysLoginController {
 
     @Autowired
     private TokenService tokenService;
+
+    @Resource
+    private CozeJWTOauthHelper cozeJWTOauthHelper;
 
     /**
      * 登录方法
@@ -74,6 +79,7 @@ public class SysLoginController {
         ajax.put("user", user);
         ajax.put("roles", roles);
         ajax.put("permissions", permissions);
+        ajax.put("cozeAccessToken", cozeJWTOauthHelper.getAccessToken(user.getUserId()));
         return ajax;
     }
 

@@ -19,7 +19,7 @@ import java.nio.file.Paths;
 @Data
 @Component
 @ConfigurationProperties(prefix = "coze")
-public class JWTsOauthConfig {
+public class CozeJWTOAuthConfig {
 
     private String clientId;
     private String privateFilePath;
@@ -54,6 +54,7 @@ public class JWTsOauthConfig {
                             .privateKey(privateKey)
                             .publicKey(publicKey)
                             .baseURL(Consts.COZE_CN_BASE_URL)
+                            .ttl(24 * 60 * 60)
                             .build();
         } catch (Exception e) {
             log.error("创建JWTOauthClient失败", e);

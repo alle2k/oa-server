@@ -12,6 +12,7 @@ import eu.bitwalker.useragentutils.UserAgent;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
+import java.security.Key;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +49,8 @@ public class TokenService {
     protected static final long MILLIS_MINUTE = 60 * MILLIS_SECOND;
 
     private static final Long MILLIS_MINUTE_TEN = 20 * 60 * 1000L;
+
+    private static final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
 
     @Autowired
     private RedisCache redisCache;
@@ -161,7 +165,7 @@ public class TokenService {
     private String createToken(Map<String, Object> claims) {
         String token = Jwts.builder()
                 .setClaims(claims)
-                .signWith(SignatureAlgorithm.HS512, secret).compact();
+                .signWith(key).compact();
         return token;
     }
 
@@ -172,8 +176,9 @@ public class TokenService {
      * @return 数据声明
      */
     private Claims parseToken(String token) {
-        return Jwts.parser()
-                .setSigningKey(secret)
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
     }

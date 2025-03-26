@@ -58,6 +58,11 @@
             <groupId>com.oa</groupId>
             <artifactId>oa-system</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>com.coze</groupId>
+            <artifactId>coze-api</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

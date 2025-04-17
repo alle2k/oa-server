@@ -1,5 +1,6 @@
 package com.oa.core.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.oa.common.core.domain.model.DataPermissionDto;
 import com.oa.common.core.page.PageDomain;
 import lombok.Data;
@@ -43,4 +44,16 @@ public class AccountAgencyQueryDto extends PageDomain {
      * 逾期标识
      */
     private Integer overdueFlag;
+
+    /**
+     * 服务开始时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private Date serviceBeginDate;
+
+    /**
+     * 服务结束时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private Date serviceEndDate;
 }

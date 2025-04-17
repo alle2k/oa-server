@@ -80,6 +80,12 @@
           <if test="null != param.overdueFlag and param.overdueFlag == '1'.toString()">
               and curdate() <![CDATA[ >= ]]> t1.service_end_date and curdate() - t1.service_end_date <![CDATA[ <= ]]> 30
           </if>
+          <if test="null != param.serviceBeginDate">
+              and t1.service_begin_date <![CDATA[ >= ]]> #{param.serviceBeginDate}
+          </if>
+          <if test="null != param.serviceEndDate">
+              and t1.service_end_date <![CDATA[ <= ]]> #{param.serviceEndDate}
+          </if>
           <if test="null != param.dataPermission and null != param.dataPermission.dataScope and param.dataPermission.dataScope != ''">
               <choose>
                   <when test="param.dataPermission.dataScope == '3'.toString() or param.dataPermission.dataScope == '4'.toString()">

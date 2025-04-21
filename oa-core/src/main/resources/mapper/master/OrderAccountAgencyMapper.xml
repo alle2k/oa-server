@@ -78,7 +78,7 @@
               </foreach>
           </if>
           <if test="null != param.overdueFlag and param.overdueFlag == '1'.toString()">
-              and curdate() <![CDATA[ >= ]]> t1.service_end_date and curdate() - t1.service_end_date <![CDATA[ <= ]]> 30
+              and ((curdate() <![CDATA[ < ]]> t1.service_end_date and datediff(t1.service_end_date, curdate()) <![CDATA[ <= ]]> 30) or curdate() <![CDATA[ >= ]]> t1.service_end_date)
           </if>
           <if test="null != param.serviceBeginDate">
               and t1.service_begin_date <![CDATA[ >= ]]> #{param.serviceBeginDate}

@@ -1,7 +1,6 @@
 package com.oa.system.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.oa.common.annotation.DataScope;
 import com.oa.common.constant.UserConstants;
 import com.oa.common.core.domain.entity.SysRole;
 import com.oa.common.core.domain.entity.SysUser;
@@ -48,7 +47,6 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
      * @return 角色数据集合信息
      */
     @Override
-    @DataScope(deptAlias = "d")
     public List<SysRole> selectRoleList(SysRole role) {
         return roleMapper.selectRoleList(role);
     }

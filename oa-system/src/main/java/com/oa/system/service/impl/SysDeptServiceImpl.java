@@ -1,7 +1,6 @@
 package com.oa.system.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.oa.common.annotation.DataScope;
 import com.oa.common.constant.UserConstants;
 import com.oa.common.core.domain.TreeSelect;
 import com.oa.common.core.domain.entity.SysDept;
@@ -45,7 +44,6 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
      * @return 部门信息集合
      */
     @Override
-    @DataScope(deptAlias = "d")
     public List<SysDept> selectDeptList(SysDept dept) {
         return deptMapper.selectDeptList(dept);
     }

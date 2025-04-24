@@ -67,10 +67,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             loginUser.setDataPermissionDto(new DataPermissionDto(DataScopeAspect.DATA_SCOPE_ALL));
         }
         if (dataScopes.contains(DataScopeAspect.DATA_SCOPE_DEPT_AND_CHILD)) {
-            loginUser.setDataPermissionDto(new DataPermissionDto(DataScopeAspect.DATA_SCOPE_DEPT_AND_CHILD, new LinkedList<>(sysDeptService.recursiveDownGetDeptIds(SecurityUtils.getDeptId()))));
+            loginUser.setDataPermissionDto(new DataPermissionDto(DataScopeAspect.DATA_SCOPE_DEPT_AND_CHILD, new LinkedList<>(sysDeptService.recursiveDownGetDeptIds(user.getDeptId()))));
         }
         if (dataScopes.contains(DataScopeAspect.DATA_SCOPE_DEPT)) {
-            loginUser.setDataPermissionDto(new DataPermissionDto(DataScopeAspect.DATA_SCOPE_DEPT, Collections.singletonList(sysDeptService.selectOneByDeptId(SecurityUtils.getDeptId()).getDeptId())));
+            loginUser.setDataPermissionDto(new DataPermissionDto(DataScopeAspect.DATA_SCOPE_DEPT, Collections.singletonList(sysDeptService.selectOneByDeptId(user.getDeptId()).getDeptId())));
         }
         if (dataScopes.contains(DataScopeAspect.DATA_SCOPE_SELF)) {
             loginUser.setDataPermissionDto(new DataPermissionDto(DataScopeAspect.DATA_SCOPE_SELF, user.getUserId()));

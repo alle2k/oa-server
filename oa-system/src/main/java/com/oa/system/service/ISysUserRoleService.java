@@ -24,4 +24,9 @@ public interface ISysUserRoleService extends IService<SysUserRole> {
         return list(Wrappers.<SysUserRole>lambdaQuery()
                 .in(SysUserRole::getRoleId, roleIds));
     }
+
+    default List<SysUserRole> selectListByUserIds(Collection<Long> userIds) {
+        return list(Wrappers.<SysUserRole>lambdaQuery()
+                .in(SysUserRole::getUserId, userIds));
+    }
 }

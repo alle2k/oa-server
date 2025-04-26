@@ -25,6 +25,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.validation.Validator;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -101,6 +102,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     public SysUser selectUserByUserName(String userName) {
         return userMapper.selectUserByUserName(userName);
+    }
+
+    @Override
+    public List<SysUser> selectListByUserIds(Collection<Long> userIds) {
+        return baseMapper.selectListByUserIds(userIds);
     }
 
     /**

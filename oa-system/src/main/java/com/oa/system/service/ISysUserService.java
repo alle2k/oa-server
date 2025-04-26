@@ -43,6 +43,8 @@ public interface ISysUserService extends IService<SysUser> {
      */
     SysUser selectUserByUserName(String userName);
 
+    List<SysUser> selectListByUserIds(Collection<Long> userIds);
+
     /**
      * 通过用户ID查询用户
      *

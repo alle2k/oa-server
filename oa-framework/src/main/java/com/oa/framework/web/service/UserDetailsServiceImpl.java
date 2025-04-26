@@ -1,16 +1,12 @@
 package com.oa.framework.web.service;
 
-import com.oa.common.core.domain.entity.SysRole;
 import com.oa.common.core.domain.entity.SysUser;
-import com.oa.common.core.domain.model.DataPermissionDto;
 import com.oa.common.core.domain.model.LoginUser;
 import com.oa.common.enums.UserStatus;
 import com.oa.common.exception.ServiceException;
 import com.oa.common.utils.MessageUtils;
-import com.oa.common.utils.SecurityUtils;
 import com.oa.common.utils.StringUtils;
-import com.oa.framework.aspectj.DataScopeAspect;
-import com.oa.system.service.ISysDeptService;
+import com.oa.system.helper.DataPermissionHelper;
 import com.oa.system.service.ISysUserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,10 +16,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * 用户验证处理
@@ -39,7 +31,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Resource
     private SysPermissionService permissionService;
     @Resource
-    private ISysDeptService sysDeptService;
+    private DataPermissionHelper dataPermissionHelper;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -61,20 +53,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 
     public UserDetails createLoginUser(SysUser user) {
-        LoginUser loginUser = new LoginUser(user.getUserId(), user.getDeptId(), user, permissionService.getMenuPermission(user));
-        Set<String> dataScopes = loginUser.getUser().getRoles().stream().map(SysRole::getDataScope).collect(Collectors.toSet());
-        if (dataScopes.contains(DataScopeAspect.DATA_SCOPE_ALL)) {
-            loginUser.setDataPermissionDto(new DataPermissionDto(DataScopeAspect.DATA_SCOPE_ALL));
-        }
-        if (dataScopes.contains(DataScopeAspect.DATA_SCOPE_DEPT_AND_CHILD)) {
-            loginUser.setDataPermissionDto(new DataPermissionDto(DataScopeAspect.DATA_SCOPE_DEPT_AND_CHILD, new LinkedList<>(sysDeptService.recursiveDownGetDeptIds(user.getDeptId()))));
-        }
-        if (dataScopes.contains(DataScopeAspect.DATA_SCOPE_DEPT)) {
-            loginUser.setDataPermissionDto(new DataPermissionDto(DataScopeAspect.DATA_SCOPE_DEPT, Collections.singletonList(sysDeptService.selectOneByDeptId(user.getDeptId()).getDeptId())));
-        }
-        if (dataScopes.contains(DataScopeAspect.DATA_SCOPE_SELF)) {
-            loginUser.setDataPermissionDto(new DataPermissionDto(DataScopeAspect.DATA_SCOPE_SELF, user.getUserId()));
-        }
-        return loginUser;
+        return dataPermissionHelper.populate(new LoginUser(user.getUserId(), user.getDeptId(), user, permissionService.getMenuPermission(user)));
     }
 }

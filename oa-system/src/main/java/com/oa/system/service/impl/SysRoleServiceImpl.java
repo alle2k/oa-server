@@ -1,9 +1,14 @@
 package com.oa.system.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.oa.common.constant.CacheConstants;
+import com.oa.common.constant.TransactionConstant;
 import com.oa.common.constant.UserConstants;
 import com.oa.common.core.domain.entity.SysRole;
 import com.oa.common.core.domain.entity.SysUser;
+import com.oa.common.core.domain.model.DataPermissionDto;
+import com.oa.common.core.domain.model.LoginUser;
+import com.oa.common.core.redis.RedisCache;
 import com.oa.common.exception.ServiceException;
 import com.oa.common.utils.SecurityUtils;
 import com.oa.common.utils.StringUtils;
@@ -11,16 +16,23 @@ import com.oa.common.utils.spring.SpringUtils;
 import com.oa.system.domain.SysRoleDept;
 import com.oa.system.domain.SysRoleMenu;
 import com.oa.system.domain.SysUserRole;
+import com.oa.system.helper.DataPermissionHelper;
 import com.oa.system.mapper.master.SysRoleDeptMapper;
 import com.oa.system.mapper.master.SysRoleMapper;
 import com.oa.system.mapper.master.SysRoleMenuMapper;
 import com.oa.system.mapper.master.SysUserRoleMapper;
+import com.oa.system.service.ISysDeptService;
 import com.oa.system.service.ISysRoleService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.oa.system.service.ISysUserRoleService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
+import javax.annotation.Resource;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 角色 业务层处理
@@ -28,17 +40,25 @@ import java.util.*;
 @Service
 public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> implements ISysRoleService {
 
-    @Autowired
+    @Resource
     private SysRoleMapper roleMapper;
-
-    @Autowired
+    @Resource
     private SysRoleMenuMapper roleMenuMapper;
-
-    @Autowired
+    @Resource
     private SysUserRoleMapper userRoleMapper;
-
-    @Autowired
+    @Resource
     private SysRoleDeptMapper roleDeptMapper;
+    @Resource
+    private ISysUserRoleService sysUserRoleService;
+    @Resource
+    private ISysRoleService sysRoleService;
+    @Resource
+    private ISysDeptService sysDeptService;
+    @Resource
+    private RedisCache redisCache;
+
+    @Value("${token.expireTime}")
+    private int expireTime;
 
     /**
      * 根据条件分页查询角色数据
@@ -203,7 +223,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
      * @return 结果
      */
     @Override
-    @Transactional
+    @Transactional(TransactionConstant.MASTER)
     public int insertRole(SysRole role) {
         // 新增角色信息
         roleMapper.insertRole(role);
@@ -217,7 +237,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
      * @return 结果
      */
     @Override
-    @Transactional
+    @Transactional(TransactionConstant.MASTER)
     public int updateRole(SysRole role) {
         // 修改角色信息
         roleMapper.updateRole(role);
@@ -244,14 +264,79 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
      * @return 结果
      */
     @Override
-    @Transactional
+    @Transactional(TransactionConstant.MASTER)
     public int authDataScope(SysRole role) {
         // 修改角色信息
         roleMapper.updateRole(role);
         // 删除角色与部门关联
         roleDeptMapper.deleteRoleDeptByRoleId(role.getRoleId());
         // 新增角色和部门信息（数据权限）
-        return insertRoleDept(role);
+        insertRoleDept(role);
+
+        List<SysUserRole> userRoleList = sysUserRoleService.selectListByRoleIds(Collections.singleton(role.getRoleId()));
+        if (CollectionUtils.isEmpty(userRoleList)) {
+            return 1;
+        }
+        Set<Long> userIds = userRoleList.stream().map(SysUserRole::getUserId).collect(Collectors.toSet());
+        Map<Long, Set<Long>> userRoleMap = sysUserRoleService.selectListByUserIds(userIds).stream().collect(Collectors.groupingBy(SysUserRole::getUserId, Collectors.mapping(SysUserRole::getRoleId, Collectors.toSet())));
+        if (CollectionUtils.isEmpty(userRoleMap)) {
+            return 1;
+        }
+        Map<Long, String> roleDataScopeMap = sysRoleService.listByIds(userRoleMap.values().stream().flatMap(Collection::stream).collect(Collectors.toSet()))
+                .stream().collect(Collectors.toMap(SysRole::getRoleId, SysRole::getDataScope));
+        if (CollectionUtils.isEmpty(roleDataScopeMap)) {
+            return 1;
+        }
+        userIds.forEach(x -> {
+            LoginUser loginUser = redisCache.getCacheObject(CacheConstants.LOGIN_TOKEN_KEY + x, LoginUser.class);
+            if (Objects.isNull(loginUser)) {
+                return;
+            }
+            Set<Long> roleIds = userRoleMap.get(x);
+            if (CollectionUtils.isEmpty(roleIds)) {
+                return;
+            }
+            loginUser.setDataPermissionDto(null);
+            Iterator<Long> iterator = roleIds.iterator();
+            do {
+                Long roleId = iterator.next();
+                String dataScope = roleDataScopeMap.get(roleId);
+                if (StringUtils.isBlank(dataScope)) {
+                    continue;
+                }
+                DataPermissionDto dataPermissionDto = loginUser.getDataPermissionDto();
+                boolean dataPermissionDtoNullFlag = Objects.isNull(dataPermissionDto);
+                switch (dataScope) {
+                    case DataPermissionHelper.DATA_SCOPE_ALL:
+                        loginUser.setDataPermissionDto(new DataPermissionDto(dataScope));
+                        break;
+                    case DataPermissionHelper.DATA_SCOPE_DEPT_AND_CHILD:
+                        loginUser.setDataPermissionDto(new DataPermissionDto(dataScope, new LinkedList<>(sysDeptService.recursiveDownGetDeptIds(loginUser.getDeptId()))));
+                        break;
+                    case DataPermissionHelper.DATA_SCOPE_DEPT:
+                        if (!dataPermissionDtoNullFlag && DataPermissionHelper.DATA_SCOPE_DEPT_AND_CHILD.equals(dataPermissionDto.getDataScope())) {
+                            break;
+                        }
+                        loginUser.setDataPermissionDto(new DataPermissionDto(dataScope, Collections.singletonList(sysDeptService.selectOneByDeptId(loginUser.getDeptId()).getDeptId())));
+                        break;
+                    case DataPermissionHelper.DATA_SCOPE_SELF:
+                        if (!dataPermissionDtoNullFlag && (DataPermissionHelper.DATA_SCOPE_DEPT_AND_CHILD.equals(dataPermissionDto.getDataScope())
+                                || DataPermissionHelper.DATA_SCOPE_DEPT.equals(dataPermissionDto.getDataScope()))) {
+                            break;
+                        }
+                        loginUser.setDataPermissionDto(new DataPermissionDto(dataScope, loginUser.getUserId()));
+                        break;
+                    case DataPermissionHelper.DATA_SCOPE_CUSTOM:
+                    default:
+                        break;
+                }
+                if (DataPermissionHelper.DATA_SCOPE_ALL.equals(dataScope)) {
+                    break;
+                }
+            } while (iterator.hasNext());
+            redisCache.setCacheObject(CacheConstants.LOGIN_TOKEN_KEY + x, loginUser, expireTime, TimeUnit.MINUTES);
+        });
+        return 1;
     }
 
     /**
@@ -303,7 +388,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
      * @return 结果
      */
     @Override
-    @Transactional
+    @Transactional(TransactionConstant.MASTER)
     public int deleteRoleById(Long roleId) {
         // 删除角色与菜单关联
         roleMenuMapper.deleteRoleMenuByRoleId(roleId);
@@ -319,7 +404,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
      * @return 结果
      */
     @Override
-    @Transactional
+    @Transactional(TransactionConstant.MASTER)
     public int deleteRoleByIds(Long[] roleIds) {
         for (Long roleId : roleIds) {
             checkRoleAllowed(new SysRole(roleId));

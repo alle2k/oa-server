@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.oa.common.core.domain.entity.SysUser;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -41,6 +42,8 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
      * @return 用户对象信息
      */
     SysUser selectUserByUserName(String userName);
+
+    List<SysUser> selectListByUserIds(@Param("list") Collection<Long> UserIds);
 
     /**
      * 通过用户ID查询用户

@@ -1,6 +1,8 @@
 package com.oa.system.mapper.master;
 
 import java.util.List;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
 import com.oa.common.core.domain.entity.SysMenu;
 
@@ -9,7 +11,7 @@ import com.oa.common.core.domain.entity.SysMenu;
  *
  * 
  */
-public interface SysMenuMapper
+public interface SysMenuMapper extends BaseMapper<SysMenu>
 {
     /**
      * 查询系统菜单列表

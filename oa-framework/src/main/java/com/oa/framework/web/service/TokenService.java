@@ -40,7 +40,6 @@ public class TokenService {
     @Value("${token.secret}")
     private String secret;
 
-    // 令牌有效期（默认30分钟）
     @Value("${token.expireTime}")
     private int expireTime;
 
@@ -208,7 +207,11 @@ public class TokenService {
         return token;
     }
 
-    private String getTokenKey(Long uuid) {
-        return CacheConstants.LOGIN_TOKEN_KEY + uuid;
+    private String getTokenKey(Long userId) {
+        return CacheConstants.LOGIN_TOKEN_KEY + userId;
+    }
+
+    public LoginUser getLoginUserById(Long userId) {
+        return redisCache.getCacheObject(getTokenKey(userId), LoginUser.class);
     }
 }

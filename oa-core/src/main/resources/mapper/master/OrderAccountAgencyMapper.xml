@@ -95,7 +95,7 @@
                       </foreach>
                   </when>
                   <when test="param.dataPermission.dataScope == '5'.toString()">
-                      and t2.create_user = #{param.loginUser}
+                      and t2.create_user = #{param.dataPermission.loginUser}
                   </when>
               </choose>
           </if>

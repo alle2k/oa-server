@@ -66,4 +66,9 @@ public class BusinessOrderSaveDto {
      */
     @NotEmpty
     private List<Integer> bizTypeList;
+
+    /**
+     * 关联合同ID
+     */
+    private List<Long> refIds;
 }

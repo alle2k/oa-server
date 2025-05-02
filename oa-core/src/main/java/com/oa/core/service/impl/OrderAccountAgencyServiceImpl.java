@@ -137,6 +137,10 @@ public class OrderAccountAgencyServiceImpl extends ServiceImpl<OrderAccountAgenc
     @MultiTransactional
     @Override
     public void modify(OrderAccountAgencyUpdDtp dto) {
+        BusinessOrder businessOrder = businessOrderService.selectOneById(dto.getOrderId());
+        if (dto.getAmount().compareTo(businessOrder.getFreeAmount()) > 0) {
+            throw new ServiceException("代理记账费用不能超过合同订单剩余可用金额");
+        }
         Date date = new Date();
         Long userId = SecurityUtils.getUserId();
         OrderAccountAgency entity = selectOneById(dto.getId());
@@ -147,12 +151,10 @@ public class OrderAccountAgencyServiceImpl extends ServiceImpl<OrderAccountAgenc
         entity.setUpdateTime(date);
         updateById(entity);
 
-        BusinessOrder businessOrder = businessOrderService.selectOneById(entity.getOrderId());
         businessOrder.setUsedAmount(businessOrder.getUsedAmount().add(entity.getAmount()));
         businessOrder.setFreeAmount(businessOrder.getFreeAmount().subtract(entity.getAmount()));
         businessOrder.setUpdateUser(userId);
         businessOrder.setUpdateTime(date);
-
         flowableService.invokeProcessResubmitAfter(entity.getId(), AuditTypeEnum.APPROVAL_ACCOUNT_AGENCY, StringUtils.EMPTY);
     }
 }

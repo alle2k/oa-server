@@ -63,8 +63,10 @@ public class BusinessOrderItem implements Serializable {
     @TableField("update_time")
     private Date updateTime;
 
-    public BusinessOrderItem(Long orderId, Integer bizType) {
+    public BusinessOrderItem(Long orderId, Integer bizType, Long userId) {
         this.orderId = orderId;
         this.bizType = bizType;
+        this.createUser = userId;
+        this.updateUser = userId;
     }
 }

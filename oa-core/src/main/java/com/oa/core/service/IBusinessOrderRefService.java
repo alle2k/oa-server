@@ -1,7 +1,12 @@
 package com.oa.core.service;
 
-import com.oa.core.domain.BusinessOrderRef;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.oa.core.domain.BusinessOrderRef;
+import com.oa.core.enums.DeletedEnum;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @auther CodeGenerator
@@ -10,4 +15,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface IBusinessOrderRefService extends IService<BusinessOrderRef> {
 
+    default List<BusinessOrderRef> selectListByOrderIds(Collection<Long> orderIds) {
+        return list(Wrappers.<BusinessOrderRef>lambdaQuery()
+                .in(BusinessOrderRef::getOrderId, orderIds)
+                .eq(BusinessOrderRef::getDeleted, DeletedEnum.UN_DELETE.getCode()));
+    }
 }

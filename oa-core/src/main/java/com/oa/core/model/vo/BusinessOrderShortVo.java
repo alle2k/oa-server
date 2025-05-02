@@ -4,10 +4,9 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
 
 @Data
-public class BusinessOrderDetailVo {
+public class BusinessOrderShortVo {
 
     /**
      * PK
@@ -18,6 +17,11 @@ public class BusinessOrderDetailVo {
      * 审批编号
      */
     private String auditNo;
+
+    /**
+     * 部门ID
+     */
+    private Long deptId;
 
     /**
      * 付款时间
@@ -45,6 +49,16 @@ public class BusinessOrderDetailVo {
     private BigDecimal amount;
 
     /**
+     * 已使用金额
+     */
+    private BigDecimal usedAmount;
+
+    /**
+     * 剩余可用金额
+     */
+    private BigDecimal freeAmount;
+
+    /**
      * 业绩
      */
     private BigDecimal performance;
@@ -55,19 +69,9 @@ public class BusinessOrderDetailVo {
     private String annexUrl;
 
     /**
-     * 附件列表
-     */
-    private List<String> annexUrlList;
-
-    /**
      * 打款截图
      */
     private String paymentScreenshot;
-
-    /**
-     * 打款截图列表
-     */
-    private List<String> paymentScreenshotList;
 
     /**
      * 审批状态 0-审批中 1-审批通过 2-已拒绝 4-已撤销 5-已退回
@@ -80,34 +84,4 @@ public class BusinessOrderDetailVo {
      * 审批通过时间
      */
     private Date approvalTime;
-
-    /**
-     * 备注
-     */
-    private String remark;
-
-    /**
-     * 创建人
-     */
-    private Long createUser;
-
-    /**
-     * 用户姓名
-     */
-    private String createUserName;
-
-    /**
-     * 创建时间
-     */
-    private Date createTime;
-
-    /**
-     * 服务内容列表
-     */
-    private List<BusinessOrderItemDetailVo> itemList;
-
-    /**
-     * 关联合同列表
-     */
-    private List<BusinessOrderShortVo> refOrderList;
 }

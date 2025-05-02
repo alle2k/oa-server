@@ -5,6 +5,7 @@
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.oa.core.domain.BusinessOrderRef">
         <id column="id" property="id"/>
+        <result column="order_id" property="orderId"/>
         <result column="ref_id" property="refId"/>
         <result column="remark" property="remark"/>
         <result column="deleted" property="deleted"/>
@@ -17,7 +18,7 @@
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         id
-        , ref_id, remark, deleted, create_user, create_time, update_user, update_time
+        , order_id, ref_id, remark, deleted, create_user, create_time, update_user, update_time
     </sql>
 
 </mapper>

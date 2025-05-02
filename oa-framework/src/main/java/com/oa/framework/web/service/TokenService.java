@@ -12,15 +12,17 @@ import eu.bitwalker.useragentutils.UserAgent;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
-import java.security.Key;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -48,8 +50,6 @@ public class TokenService {
     protected static final long MILLIS_MINUTE = 60 * MILLIS_SECOND;
 
     private static final Long MILLIS_MINUTE_TEN = 20 * 60 * 1000L;
-
-    private static final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
 
     @Autowired
     private RedisCache redisCache;
@@ -107,7 +107,6 @@ public class TokenService {
 
         Map<String, Object> claims = new HashMap<>();
         claims.put(Constants.LOGIN_USER_KEY, loginUser.getUserId());
-        claims.put("timestamp", System.currentTimeMillis());
         String token = createToken(claims);
         loginUser.setToken(token);
         refreshToken(loginUser);
@@ -162,10 +161,13 @@ public class TokenService {
      * @return 令牌
      */
     private String createToken(Map<String, Object> claims) {
-        String token = Jwts.builder()
+        SecretKey key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), SignatureAlgorithm.HS512.getJcaName());
+        Date now = new Date();
+        return Jwts.builder()
                 .setClaims(claims)
-                .signWith(key).compact();
-        return token;
+                .setIssuedAt(now)
+                .setExpiration(new Date(now.getTime() + (expireTime * 1000L)))
+                .signWith(key, SignatureAlgorithm.HS512).compact();
     }
 
     /**
@@ -176,7 +178,7 @@ public class TokenService {
      */
     private Claims parseToken(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(key)
+                .setSigningKey(secret.getBytes(StandardCharsets.UTF_8))
                 .build()
                 .parseClaimsJws(token)
                 .getBody();

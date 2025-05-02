@@ -150,7 +150,7 @@ token:
   # 令牌自定义标识
   header: Authorization
   # 令牌密钥
-  secret: abcdefghijklmnopqrstuvwxyz
+  secret: OA-System:Copyright@2024-2025:zhaokai.xyz:All:Rights:Reserverd:BoEdge:JWT-Signature-Key
   # 令牌有效期（默认30分钟）
   expireTime: 10080
 

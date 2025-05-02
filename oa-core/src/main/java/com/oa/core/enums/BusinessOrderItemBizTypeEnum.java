@@ -18,6 +18,7 @@ public enum BusinessOrderItemBizTypeEnum {
     INTELLECTUAL_PROPERTY(3, "知识产权"),
     PROJECT_APPLICATION(4, "项目申报"),
     OTHERS(5, "其他"),
+    ACCOUNT_AGENCY_EXTEND(6, "代理记账续期"),
     ;
 
     public static final Map<Integer, BusinessOrderItemBizTypeEnum> codeMap;

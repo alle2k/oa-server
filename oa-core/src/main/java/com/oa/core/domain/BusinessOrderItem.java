@@ -69,4 +69,9 @@ public class BusinessOrderItem implements Serializable {
         this.createUser = userId;
         this.updateUser = userId;
     }
+
+    public BusinessOrderItem(Long orderId, Integer bizType) {
+        this.orderId = orderId;
+        this.bizType = bizType;
+    }
 }

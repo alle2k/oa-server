@@ -9,6 +9,7 @@ import org.flowable.task.api.Task;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public interface FlowableService {
 
@@ -77,6 +78,8 @@ public interface FlowableService {
 
 
     List<AuditNodeRecordVO> selectAllNodeInfo(String instanceId);
+
+    Map<String, Object> selectCurrentTaskCandidateUser(String instanceId);
 
     /**
      * 催办

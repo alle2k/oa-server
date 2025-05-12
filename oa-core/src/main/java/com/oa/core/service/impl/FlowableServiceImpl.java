@@ -736,6 +736,47 @@ public class FlowableServiceImpl implements FlowableService {
     }
 
     @Override
+    public Map<String, Object> selectCurrentTaskCandidateUser(String instanceId) {
+        //查询该实例当前正在活动的任务
+        List<Task> tasks = taskService.createTaskQuery()
+                .processInstanceId(instanceId)
+                .active()
+                .list();
+        if (CollectionUtil.isEmpty(tasks)) {
+            return Collections.emptyMap();
+        }
+        List<String> candidates = new LinkedList<>();
+        Task task = tasks.get(0);
+        List<IdentityLink> identityLinks = taskService.getIdentityLinksForTask(task.getId());
+        for (IdentityLink identityLink : identityLinks) {
+            if (identityLink.getType().equals("candidate")) {
+                candidates.add(identityLink.getUserId());
+            }
+        }
+        log.info("当前任务候选人：{}", candidates);
+        Date createTime = tasks.get(0).getCreateTime();
+        //NodeCandidateInfoVO
+        //解析xml
+        List<AuditCandidateDto> candidateResult = new LinkedList<>();
+        for (String candidate : candidates) {
+            if (StringUtils.isNotEmpty(candidate)) {
+                Map<String, Object> candidateMap = XmlUtil.xmlToMap(candidate);
+                Integer type = Integer.valueOf((String) candidateMap.get("type"));
+                Long userId = Long.valueOf((String) candidateMap.get("userId"));
+                AuditCandidateDto candidateDto = new AuditCandidateDto();
+                candidateDto.setType(type);
+                candidateDto.setUserId(userId);
+                candidateResult.add(candidateDto);
+            }
+        }
+        candidateResult = candidateResult.stream().filter(x -> x.getType().equals(CandidateTypeEnum.AUDIT.getValue())).collect(Collectors.toList());
+        Map<String, Object> result = new HashMap<>();
+        result.put("createTime", createTime);
+        result.put("candidates", candidateResult);
+        return result;
+    }
+
+    @Override
     public void remind(Long id, Integer auditType) {
         AbstractAuditBizProcessor processorBean = AuditTypeEnum.getProcessorBean(auditType);
         ApprovalSubmissionRecord record = approvalSubmissionRecordService.selectByAuditNo(processorBean.getAuditNoByBizId(id));

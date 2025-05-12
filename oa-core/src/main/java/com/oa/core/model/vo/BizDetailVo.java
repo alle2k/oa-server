@@ -19,6 +19,8 @@ public class BizDetailVo<T> {
      */
     @ApiModelProperty("节点信息")
     private List<AuditNodeRecordVO> nodeInfo;
+    @ApiModelProperty("当前审批用户列表")
+    private List<UserShortVo> currentAuditUserList;
 
     public BizDetailVo(T bizInfo) {
         this.bizInfo = bizInfo;

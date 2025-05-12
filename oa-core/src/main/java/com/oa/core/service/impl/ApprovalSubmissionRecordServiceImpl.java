@@ -2,9 +2,8 @@ package com.oa.core.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.oa.common.constant.TransactionConstant;
+import com.oa.common.core.domain.entity.SysUser;
 import com.oa.common.core.domain.model.LoginUser;
-import com.oa.common.error.BaseCode;
-import com.oa.common.exception.ServiceException;
 import com.oa.common.utils.OrikaMapperUtils;
 import com.oa.common.utils.SecurityUtils;
 import com.oa.common.utils.StringUtils;
@@ -16,19 +15,23 @@ import com.oa.core.enums.AuditTypeEnum;
 import com.oa.core.helper.GenerateAuditNoHelper;
 import com.oa.core.mapper.master.ApprovalSubmissionRecordMapper;
 import com.oa.core.model.dto.ApprovalSubmissionRecordSaveDto;
+import com.oa.core.model.dto.AuditCandidateDto;
 import com.oa.core.model.vo.AccountAgencyDetailVo;
 import com.oa.core.model.vo.BizDetailVo;
 import com.oa.core.model.vo.BusinessOrderDetailVo;
+import com.oa.core.model.vo.UserShortVo;
 import com.oa.core.service.FlowableService;
 import com.oa.core.service.IApprovalSubmissionRecordService;
 import com.oa.core.service.IBusinessOrderService;
 import com.oa.core.service.IOrderAccountAgencyService;
+import com.oa.system.service.ISysUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.util.Date;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSubmissionRecordMapper, ApprovalSubmissionRecord> implements IApprovalSubmissionRecordService {
@@ -41,6 +44,8 @@ public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSub
     private IBusinessOrderService businessOrderService;
     @Resource
     private IOrderAccountAgencyService orderAccountAgencyService;
+    @Resource
+    private ISysUserService sysUserService;
 
     @Transactional(TransactionConstant.MASTER)
     @Override
@@ -97,6 +102,17 @@ public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSub
                 result = new BizDetailVo<>();
         }
         result.setNodeInfo(flowableService.selectAllNodeInfo(approvalSubmissionRecord.getInstanceId()));
+        result.setCurrentAuditUserList(Collections.emptyList());
+        Map<String, Object> map = flowableService.selectCurrentTaskCandidateUser(approvalSubmissionRecord.getInstanceId());
+        if (CollectionUtils.isEmpty(map)) {
+            return result;
+        }
+        List<?> candidates = (List<?>) map.get("candidates");
+        if (CollectionUtils.isEmpty(candidates)) {
+            return result;
+        }
+        Set<Long> userIdSet = candidates.stream().map(x -> ((AuditCandidateDto) x).getUserId()).collect(Collectors.toSet());
+        result.setCurrentAuditUserList(OrikaMapperUtils.mapList(sysUserService.listByIds(userIdSet), SysUser.class, UserShortVo.class));
         return result;
     }
 }

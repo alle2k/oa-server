@@ -2,28 +2,23 @@ package com.oa.core.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.oa.common.constant.TransactionConstant;
+import com.oa.common.core.domain.entity.SysDept;
 import com.oa.common.core.domain.entity.SysUser;
 import com.oa.common.core.domain.model.LoginUser;
 import com.oa.common.utils.OrikaMapperUtils;
 import com.oa.common.utils.SecurityUtils;
 import com.oa.common.utils.StringUtils;
-import com.oa.core.domain.ApprovalSubmissionRecord;
-import com.oa.core.domain.BusinessOrder;
-import com.oa.core.domain.OrderAccountAgency;
+import com.oa.core.domain.*;
 import com.oa.core.enums.ApprovalSubmissionRecordStatusEnum;
 import com.oa.core.enums.AuditTypeEnum;
+import com.oa.core.enums.BusinessOrderItemBizTypeEnum;
 import com.oa.core.helper.GenerateAuditNoHelper;
 import com.oa.core.mapper.master.ApprovalSubmissionRecordMapper;
 import com.oa.core.model.dto.ApprovalSubmissionRecordSaveDto;
 import com.oa.core.model.dto.AuditCandidateDto;
-import com.oa.core.model.vo.AccountAgencyDetailVo;
-import com.oa.core.model.vo.BizDetailVo;
-import com.oa.core.model.vo.BusinessOrderDetailVo;
-import com.oa.core.model.vo.UserShortVo;
-import com.oa.core.service.FlowableService;
-import com.oa.core.service.IApprovalSubmissionRecordService;
-import com.oa.core.service.IBusinessOrderService;
-import com.oa.core.service.IOrderAccountAgencyService;
+import com.oa.core.model.vo.*;
+import com.oa.core.service.*;
+import com.oa.system.service.ISysDeptService;
 import com.oa.system.service.ISysUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +41,12 @@ public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSub
     private IOrderAccountAgencyService orderAccountAgencyService;
     @Resource
     private ISysUserService sysUserService;
+    @Resource
+    private ISysDeptService sysDeptService;
+    @Resource
+    private IBusinessOrderItemService businessOrderItemService;
+    @Resource
+    private IBusinessOrderRefService businessOrderRefService;
 
     @Transactional(TransactionConstant.MASTER)
     @Override
@@ -82,6 +83,42 @@ public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSub
                 BusinessOrderDetailVo businessOrderDetailVo = OrikaMapperUtils.map(businessOrder, BusinessOrderDetailVo.class);
                 businessOrderDetailVo.setAnnexUrlList(StringUtils.str2List(businessOrderDetailVo.getAnnexUrl()));
                 businessOrderDetailVo.setPaymentScreenshotList(StringUtils.str2List(businessOrderDetailVo.getPaymentScreenshot()));
+                SysUser user = sysUserService.selectOneByUserId(businessOrder.getCreateUser());
+                businessOrderDetailVo.setCreateUserName(user.getNickName());
+                businessOrderDetailVo.setCreateUserDeptId(user.getDeptId());
+                SysDept sysDept = sysDeptService.selectOneByDeptId(user.getDeptId());
+                businessOrderDetailVo.setCreateUserDeptName(sysDept.getDeptName());
+                businessOrderDetailVo.setCreateUserFullDeptId(sysDept.getAncestors());
+                businessOrderDetailVo.setCreateUserFullDeptName(businessOrderDetailVo.getCreateUserDeptName());
+                String[] parentDeptIdArr = sysDept.getAncestors().split(",");
+                Map<Long, String> parentDeptNameMap = sysDeptService.listByIds(Arrays.stream(parentDeptIdArr).map(Long::valueOf).collect(Collectors.toSet()))
+                        .stream().collect(Collectors.toMap(SysDept::getDeptId, SysDept::getDeptName));
+                if (!CollectionUtils.isEmpty(parentDeptNameMap)) {
+                    businessOrderDetailVo.setCreateUserFullDeptName(Arrays.stream(parentDeptIdArr).map(x -> parentDeptNameMap.get(Long.valueOf(x)))
+                            .filter(StringUtils::isNotBlank).collect(Collectors.joining("-")));
+                }
+                List<BusinessOrderItem> itemList = businessOrderItemService.selectListByOrderIds(Collections.singleton(bizId));
+                businessOrderDetailVo.setItemList(Collections.emptyList());
+                if (!CollectionUtils.isEmpty(itemList)) {
+                    businessOrderDetailVo.setItemList(itemList.stream().map(item -> {
+                        BusinessOrderItemBizTypeEnum bizTypeEnum = BusinessOrderItemBizTypeEnum.codeMap.get(item.getBizType());
+                        String bizTypeName;
+                        if (!Objects.isNull(bizTypeEnum)) {
+                            bizTypeName = bizTypeEnum.getDesc();
+                        } else {
+                            bizTypeName = StringUtils.EMPTY;
+                        }
+                        return new BusinessOrderItemDetailVo(item.getId(), item.getOrderId(), item.getBizType(), bizTypeName);
+                    }).collect(Collectors.toList()));
+                }
+                List<BusinessOrderRef> orderRefList = businessOrderRefService.selectListByOrderIds(Collections.singleton(bizId));
+                businessOrderDetailVo.setRefOrderList(Collections.emptyList());
+                if (!CollectionUtils.isEmpty(orderRefList)) {
+                    List<BusinessOrder> orderList = businessOrderService.listByIds(orderRefList.stream().map(BusinessOrderRef::getRefId).collect(Collectors.toSet()));
+                    if (!CollectionUtils.isEmpty(orderList)) {
+                        businessOrderDetailVo.setRefOrderList(OrikaMapperUtils.mapList(orderList, BusinessOrder.class, BusinessOrderShortVo.class));
+                    }
+                }
                 result = new BizDetailVo<>(businessOrderDetailVo);
                 break;
             case APPROVAL_ACCOUNT_AGENCY:

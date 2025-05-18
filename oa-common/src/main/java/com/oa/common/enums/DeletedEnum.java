@@ -1,4 +1,4 @@
-package com.oa.core.enums;
+package com.oa.common.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

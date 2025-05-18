@@ -96,6 +96,14 @@ public class BusinessOrderDetailVo {
      */
     private String createUserName;
 
+    private Long createUserDeptId;
+
+    private String createUserDeptName;
+
+    private String createUserFullDeptId;
+
+    private String createUserFullDeptName;
+
     /**
      * 创建时间
      */

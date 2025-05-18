@@ -3,9 +3,13 @@ package com.oa.system.service;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.oa.common.core.domain.entity.SysUser;
+import com.oa.common.enums.DeletedEnum;
+import com.oa.common.error.BaseCode;
+import com.oa.common.exception.ServiceException;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 用户 业务层
@@ -217,5 +221,13 @@ public interface ISysUserService extends IService<SysUser> {
         return list(Wrappers.<SysUser>lambdaQuery()
                 .in(SysUser::getDeptId, deptIds)
                 .ne(SysUser::getDelFlag, 2));
+    }
+
+    default SysUser selectOneByUserId(Long id) {
+        SysUser entity = getById(id);
+        if (Objects.isNull(entity) || !DeletedEnum.UN_DELETE.getCode().equals(Integer.valueOf(entity.getDelFlag()))) {
+            throw new ServiceException(BaseCode.DATA_NOT_EXIST);
+        }
+        return entity;
     }
 }

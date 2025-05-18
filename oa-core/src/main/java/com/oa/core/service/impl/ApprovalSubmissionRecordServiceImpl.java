@@ -74,28 +74,33 @@ public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSub
         BizDetailVo<?> result;
         AuditTypeEnum auditTypeEnum = AuditTypeEnum.codeMap.get(auditType);
         ApprovalSubmissionRecord approvalSubmissionRecord = selectByBizIdAndAuditType(bizId, auditTypeEnum);
-        if (Objects.isNull(approvalSubmissionRecord)) {
-            return null;
-        }
+        boolean approvalSubmissionRecordNullFlag = Objects.isNull(approvalSubmissionRecord);
         switch (auditTypeEnum) {
             case APPROVAL_BUSINESS_ORDER:
                 BusinessOrder businessOrder = businessOrderService.selectOneById(bizId);
                 BusinessOrderDetailVo businessOrderDetailVo = OrikaMapperUtils.map(businessOrder, BusinessOrderDetailVo.class);
                 businessOrderDetailVo.setAnnexUrlList(StringUtils.str2List(businessOrderDetailVo.getAnnexUrl()));
                 businessOrderDetailVo.setPaymentScreenshotList(StringUtils.str2List(businessOrderDetailVo.getPaymentScreenshot()));
-                SysUser user = sysUserService.selectOneByUserId(businessOrder.getCreateUser());
-                businessOrderDetailVo.setCreateUserName(user.getNickName());
-                businessOrderDetailVo.setCreateUserDeptId(user.getDeptId());
-                SysDept sysDept = sysDeptService.selectOneByDeptId(user.getDeptId());
-                businessOrderDetailVo.setCreateUserDeptName(sysDept.getDeptName());
-                businessOrderDetailVo.setCreateUserFullDeptId(sysDept.getAncestors());
-                businessOrderDetailVo.setCreateUserFullDeptName(businessOrderDetailVo.getCreateUserDeptName());
-                String[] parentDeptIdArr = sysDept.getAncestors().split(",");
-                Map<Long, String> parentDeptNameMap = sysDeptService.listByIds(Arrays.stream(parentDeptIdArr).map(Long::valueOf).collect(Collectors.toSet()))
-                        .stream().collect(Collectors.toMap(SysDept::getDeptId, SysDept::getDeptName));
-                if (!CollectionUtils.isEmpty(parentDeptNameMap)) {
-                    businessOrderDetailVo.setCreateUserFullDeptName(Arrays.stream(parentDeptIdArr).map(x -> parentDeptNameMap.get(Long.valueOf(x)))
-                            .filter(StringUtils::isNotBlank).collect(Collectors.joining("-")));
+                if (Objects.isNull(businessOrder.getCreateUser()) || businessOrder.getCreateUser().equals(0L)) {
+                    businessOrderDetailVo.setCreateUserName(StringUtils.EMPTY);
+                    businessOrderDetailVo.setCreateUserDeptName(StringUtils.EMPTY);
+                    businessOrderDetailVo.setCreateUserFullDeptId(StringUtils.EMPTY);
+                    businessOrderDetailVo.setCreateUserFullDeptName(StringUtils.EMPTY);
+                } else {
+                    SysUser user = sysUserService.selectOneByUserId(businessOrder.getCreateUser());
+                    businessOrderDetailVo.setCreateUserName(user.getNickName());
+                    businessOrderDetailVo.setCreateUserDeptId(user.getDeptId());
+                    SysDept sysDept = sysDeptService.selectOneByDeptId(user.getDeptId());
+                    businessOrderDetailVo.setCreateUserDeptName(sysDept.getDeptName());
+                    businessOrderDetailVo.setCreateUserFullDeptId(sysDept.getAncestors());
+                    businessOrderDetailVo.setCreateUserFullDeptName(businessOrderDetailVo.getCreateUserDeptName());
+                    String[] parentDeptIdArr = sysDept.getAncestors().split(",");
+                    Map<Long, String> parentDeptNameMap = sysDeptService.listByIds(Arrays.stream(parentDeptIdArr).map(Long::valueOf).collect(Collectors.toSet()))
+                            .stream().collect(Collectors.toMap(SysDept::getDeptId, SysDept::getDeptName));
+                    if (!CollectionUtils.isEmpty(parentDeptNameMap)) {
+                        businessOrderDetailVo.setCreateUserFullDeptName(Arrays.stream(parentDeptIdArr).map(x -> parentDeptNameMap.get(Long.valueOf(x)))
+                                .filter(StringUtils::isNotBlank).collect(Collectors.joining("-")));
+                    }
                 }
                 List<BusinessOrderItem> itemList = businessOrderItemService.selectListByOrderIds(Collections.singleton(bizId));
                 businessOrderDetailVo.setItemList(Collections.emptyList());
@@ -138,8 +143,12 @@ public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSub
             default:
                 result = new BizDetailVo<>();
         }
-        result.setNodeInfo(flowableService.selectAllNodeInfo(approvalSubmissionRecord.getInstanceId()));
+        result.setNodeInfo(Collections.emptyList());
         result.setCurrentAuditUserList(Collections.emptyList());
+        if (approvalSubmissionRecordNullFlag) {
+            return result;
+        }
+        result.setNodeInfo(flowableService.selectAllNodeInfo(approvalSubmissionRecord.getInstanceId()));
         Map<String, Object> map = flowableService.selectCurrentTaskCandidateUser(approvalSubmissionRecord.getInstanceId());
         if (CollectionUtils.isEmpty(map)) {
             return result;

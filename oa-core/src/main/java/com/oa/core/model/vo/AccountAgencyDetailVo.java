@@ -2,12 +2,14 @@ package com.oa.core.model.vo;
 
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.util.Date;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class AccountAgencyDetailVo {
+public class AccountAgencyDetailVo extends BizDetailBaseVo {
 
     @ApiModelProperty(value = "PK")
     private Long id;
@@ -32,12 +34,6 @@ public class AccountAgencyDetailVo {
 
     @ApiModelProperty(value = "审批通过时间")
     private Date approvalTime;
-
-    @ApiModelProperty(value = "创建人")
-    private Long createUser;
-
-    @ApiModelProperty(value = "创建人姓名")
-    private String createUserName;
 
     @ApiModelProperty(value = "创建时间")
     private Date createTime;

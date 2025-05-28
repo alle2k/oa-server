@@ -81,27 +81,7 @@ public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSub
                 BusinessOrderDetailVo businessOrderDetailVo = OrikaMapperUtils.map(businessOrder, BusinessOrderDetailVo.class);
                 businessOrderDetailVo.setAnnexUrlList(StringUtils.str2List(businessOrderDetailVo.getAnnexUrl()));
                 businessOrderDetailVo.setPaymentScreenshotList(StringUtils.str2List(businessOrderDetailVo.getPaymentScreenshot()));
-                if (Objects.isNull(businessOrder.getCreateUser()) || businessOrder.getCreateUser().equals(0L)) {
-                    businessOrderDetailVo.setCreateUserName(StringUtils.EMPTY);
-                    businessOrderDetailVo.setCreateUserDeptName(StringUtils.EMPTY);
-                    businessOrderDetailVo.setCreateUserFullDeptId(StringUtils.EMPTY);
-                    businessOrderDetailVo.setCreateUserFullDeptName(StringUtils.EMPTY);
-                } else {
-                    SysUser user = sysUserService.selectOneByUserId(businessOrder.getCreateUser());
-                    businessOrderDetailVo.setCreateUserName(user.getNickName());
-                    businessOrderDetailVo.setCreateUserDeptId(user.getDeptId());
-                    SysDept sysDept = sysDeptService.selectOneByDeptId(user.getDeptId());
-                    businessOrderDetailVo.setCreateUserDeptName(sysDept.getDeptName());
-                    businessOrderDetailVo.setCreateUserFullDeptId(sysDept.getAncestors());
-                    businessOrderDetailVo.setCreateUserFullDeptName(businessOrderDetailVo.getCreateUserDeptName());
-                    String[] parentDeptIdArr = sysDept.getAncestors().split(",");
-                    Map<Long, String> parentDeptNameMap = sysDeptService.listByIds(Arrays.stream(parentDeptIdArr).map(Long::valueOf).collect(Collectors.toSet()))
-                            .stream().collect(Collectors.toMap(SysDept::getDeptId, SysDept::getDeptName));
-                    if (!CollectionUtils.isEmpty(parentDeptNameMap)) {
-                        businessOrderDetailVo.setCreateUserFullDeptName(Arrays.stream(parentDeptIdArr).map(x -> parentDeptNameMap.get(Long.valueOf(x)))
-                                .filter(StringUtils::isNotBlank).collect(Collectors.joining("-")));
-                    }
-                }
+                setCreateUserRelation(businessOrderDetailVo);
                 List<BusinessOrderItem> itemList = businessOrderItemService.selectListByOrderIds(Collections.singleton(bizId));
                 businessOrderDetailVo.setItemList(Collections.emptyList());
                 if (!CollectionUtils.isEmpty(itemList)) {
@@ -138,6 +118,7 @@ public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSub
                 agencyDetailVo.setOrderAmount(order.getAmount());
                 agencyDetailVo.setUsedAmount(order.getUsedAmount());
                 agencyDetailVo.setFreeAmount(order.getFreeAmount());
+                setCreateUserRelation(agencyDetailVo);
                 result = new BizDetailVo<>(agencyDetailVo);
                 break;
             default:
@@ -160,5 +141,29 @@ public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSub
         Set<Long> userIdSet = candidates.stream().map(x -> ((AuditCandidateDto) x).getUserId()).collect(Collectors.toSet());
         result.setCurrentAuditUserList(OrikaMapperUtils.mapList(sysUserService.listByIds(userIdSet), SysUser.class, UserShortVo.class));
         return result;
+    }
+
+    private void setCreateUserRelation(BizDetailBaseVo vo) {
+        if (Objects.isNull(vo.getCreateUser()) || vo.getCreateUser().equals(0L)) {
+            vo.setCreateUserName(StringUtils.EMPTY);
+            vo.setCreateUserDeptName(StringUtils.EMPTY);
+            vo.setCreateUserFullDeptId(StringUtils.EMPTY);
+            vo.setCreateUserFullDeptName(StringUtils.EMPTY);
+            return;
+        }
+        SysUser user = sysUserService.selectOneByUserId(vo.getCreateUser());
+        vo.setCreateUserName(user.getNickName());
+        vo.setCreateUserDeptId(user.getDeptId());
+        SysDept sysDept = sysDeptService.selectOneByDeptId(user.getDeptId());
+        vo.setCreateUserDeptName(sysDept.getDeptName());
+        vo.setCreateUserFullDeptId(sysDept.getAncestors());
+        vo.setCreateUserFullDeptName(vo.getCreateUserDeptName());
+        String[] parentDeptIdArr = sysDept.getAncestors().split(",");
+        Map<Long, String> parentDeptNameMap = sysDeptService.listByIds(Arrays.stream(parentDeptIdArr).map(Long::valueOf).collect(Collectors.toSet()))
+                .stream().collect(Collectors.toMap(SysDept::getDeptId, SysDept::getDeptName));
+        if (!CollectionUtils.isEmpty(parentDeptNameMap)) {
+            vo.setCreateUserFullDeptName(Arrays.stream(parentDeptIdArr).map(x -> parentDeptNameMap.get(Long.valueOf(x)))
+                    .filter(StringUtils::isNotBlank).collect(Collectors.joining("-")));
+        }
     }
 }

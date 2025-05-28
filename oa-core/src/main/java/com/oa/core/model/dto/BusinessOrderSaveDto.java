@@ -52,11 +52,13 @@ public class BusinessOrderSaveDto {
     /**
      * 附件
      */
+    @NotEmpty
     private List<String> annexUrlList;
 
     /**
      * 打款截图
      */
+    @NotEmpty
     private List<String> paymentScreenshotList;
 
     /**

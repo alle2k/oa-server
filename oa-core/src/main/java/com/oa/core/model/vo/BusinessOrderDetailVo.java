@@ -1,13 +1,15 @@
 package com.oa.core.model.vo;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class BusinessOrderDetailVo {
+public class BusinessOrderDetailVo extends BizDetailBaseVo {
 
     /**
      * PK
@@ -85,24 +87,6 @@ public class BusinessOrderDetailVo {
      * 备注
      */
     private String remark;
-
-    /**
-     * 创建人
-     */
-    private Long createUser;
-
-    /**
-     * 用户姓名
-     */
-    private String createUserName;
-
-    private Long createUserDeptId;
-
-    private String createUserDeptName;
-
-    private String createUserFullDeptId;
-
-    private String createUserFullDeptName;
 
     /**
      * 创建时间

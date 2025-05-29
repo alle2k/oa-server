@@ -157,4 +157,21 @@ public class OrderAccountAgencyServiceImpl extends ServiceImpl<OrderAccountAgenc
         businessOrder.setUpdateTime(date);
         flowableService.invokeProcessResubmitAfter(entity.getId(), AuditTypeEnum.APPROVAL_ACCOUNT_AGENCY, StringUtils.EMPTY);
     }
+
+    @Override
+    public AccountAgencyDetailVo detail(Long id) {
+        OrderAccountAgency accountAgency = selectOneById(id);
+        BusinessOrder order = businessOrderService.selectOneById(accountAgency.getOrderId());
+        AccountAgencyDetailVo agencyDetailVo = OrikaMapperUtils.map(accountAgency, AccountAgencyDetailVo.class);
+        agencyDetailVo.setOrderAuditNo(order.getAuditNo());
+        agencyDetailVo.setPaymentTime(order.getPaymentTime());
+        agencyDetailVo.setCompanyName(order.getCompanyName());
+        agencyDetailVo.setCompanyContactUserName(order.getCompanyContactUserName());
+        agencyDetailVo.setCompanyContactUserTel(order.getCompanyContactUserTel());
+        agencyDetailVo.setOrderAmount(order.getAmount());
+        agencyDetailVo.setUsedAmount(order.getUsedAmount());
+        agencyDetailVo.setFreeAmount(order.getFreeAmount());
+        approvalSubmissionRecordService.setCreateUserRelation(agencyDetailVo);
+        return agencyDetailVo;
+    }
 }

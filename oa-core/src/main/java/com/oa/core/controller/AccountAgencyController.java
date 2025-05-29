@@ -63,4 +63,9 @@ public class AccountAgencyController extends BaseController {
         orderAccountAgencyService.del(ids);
         return success();
     }
+
+    @GetMapping("/{id}")
+    public AjaxResult detail(@PathVariable Long id) {
+        return AjaxResult.success(orderAccountAgencyService.detail(id));
+    }
 }

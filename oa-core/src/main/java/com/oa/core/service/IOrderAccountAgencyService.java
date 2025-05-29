@@ -9,6 +9,7 @@ import com.oa.core.domain.OrderAccountAgency;
 import com.oa.core.model.dto.AccountAgencyQueryDto;
 import com.oa.core.model.dto.OrderAccountAgencySaveDto;
 import com.oa.core.model.dto.OrderAccountAgencyUpdDtp;
+import com.oa.core.model.vo.AccountAgencyDetailVo;
 
 import java.util.List;
 import java.util.Objects;
@@ -66,4 +67,6 @@ public interface IOrderAccountAgencyService extends IService<OrderAccountAgency>
     }
 
     void modify(OrderAccountAgencyUpdDtp dto);
+
+    AccountAgencyDetailVo detail(Long id);
 }

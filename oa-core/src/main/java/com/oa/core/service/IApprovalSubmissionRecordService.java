@@ -6,6 +6,7 @@ import com.oa.common.enums.DeletedEnum;
 import com.oa.core.domain.ApprovalSubmissionRecord;
 import com.oa.core.enums.AuditTypeEnum;
 import com.oa.core.model.dto.ApprovalSubmissionRecordSaveDto;
+import com.oa.core.model.vo.BizDetailBaseVo;
 import com.oa.core.model.vo.BizDetailVo;
 
 import java.util.Collection;
@@ -81,4 +82,6 @@ public interface IApprovalSubmissionRecordService extends IService<ApprovalSubmi
      * @see com.oa.core.enums.ApprovalSubmissionRecordStatusEnum
      */
     BizDetailVo<?> getBizDetailByBizIdAndAuditType(Long bizId, Integer auditType);
+
+    void setCreateUserRelation(BizDetailBaseVo vo);
 }

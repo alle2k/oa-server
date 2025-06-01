@@ -1,5 +1,6 @@
 package com.oa.core.service;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.oa.common.core.page.TableDataInfo;
 import com.oa.common.enums.DeletedEnum;
@@ -11,6 +12,7 @@ import com.oa.core.model.dto.OrderAccountAgencySaveDto;
 import com.oa.core.model.dto.OrderAccountAgencyUpdDtp;
 import com.oa.core.model.vo.AccountAgencyDetailVo;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -64,6 +66,12 @@ public interface IOrderAccountAgencyService extends IService<OrderAccountAgency>
             throw new ServiceException(BaseCode.DATA_NOT_EXIST);
         }
         return entity;
+    }
+
+    default List<OrderAccountAgency> selectListByOrderIds(Collection<Long> orderIds) {
+        return list(Wrappers.<OrderAccountAgency>lambdaQuery()
+                .in(OrderAccountAgency::getOrderId, orderIds)
+                .eq(OrderAccountAgency::getDeleted, DeletedEnum.UN_DELETE.getCode()));
     }
 
     void modify(OrderAccountAgencyUpdDtp dto);

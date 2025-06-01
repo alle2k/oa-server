@@ -42,6 +42,8 @@ public class BusinessOrderQueryDto extends PageDomain {
      */
     private Integer bizType;
 
+    private Integer menuFlag;
+
     /**
      * 业务订单ID列表
      */

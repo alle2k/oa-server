@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oa.core.mapper.master.OrderAccountAgencyAccountMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.oa.core.domain.OrderAccountAgencyAccount">
+        <id column="id" property="id"/>
+        <result column="order_id" property="orderId"/>
+        <result column="contract_no" property="contractNo"/>
+        <result column="payment_time" property="paymentTime"/>
+        <result column="company_name" property="companyName"/>
+        <result column="company_contact_user_name" property="companyContactUserName"/>
+        <result column="company_contact_user_tel" property="companyContactUserTel"/>
+        <result column="order_amount" property="orderAmount"/>
+        <result column="amount" property="amount"/>
+        <result column="service_begin_date" property="serviceBeginDate"/>
+        <result column="service_end_date" property="serviceEndDate"/>
+        <result column="tax_no" property="taxNo"/>
+        <result column="company_nature" property="companyNature"/>
+        <result column="has_tax_ctrl" property="hasTaxCtrl"/>
+        <result column="id_card" property="idCard"/>
+        <result column="password" property="password"/>
+        <result column="register_tax_manager_phone" property="registerTaxManagerPhone"/>
+        <result column="individual_income_tax_password" property="individualIncomeTaxPassword"/>
+        <result column="company_detail" property="companyDetail"/>
+        <result column="sale" property="sale"/>
+        <result column="pay_period" property="payPeriod"/>
+        <result column="annex_url" property="annexUrl"/>
+        <result column="payment_screenshot" property="paymentScreenshot"/>
+        <result column="remark" property="remark"/>
+        <result column="deleted" property="deleted"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user" property="updateUser"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id
+        , order_id, contract_no, payment_time, company_name, company_contact_user_name, company_contact_user_tel, order_amount, amount, service_begin_date, service_end_date, tax_no, company_nature, has_tax_ctrl, id_card, password, register_tax_manager_phone, individual_income_tax_password, company_detail, sale, pay_period, annex_url, payment_screenshot, remark, deleted, create_user, create_time, update_user, update_time
+    </sql>
+
+    <select id="pageQuery" resultType="com.oa.core.model.vo.AccountAgencyAccountDetailVo">
+        select id,
+               order_id                  orderId,
+               contract_no               contractNo,
+               payment_time              paymentTime,
+               company_name              companyName,
+               company_contact_user_name companyContactUserName,
+               company_contact_user_tel  companyContactUserTel,
+               order_amount              orderAmount,
+               amount,
+               service_begin_date        serviceBeginDate,
+               service_end_date          serviceEndDate,
+               create_user               createUser,
+               create_time               createTime,
+               annex_url                 annexUrl,
+               payment_screenshot        paymentScreenshot
+        from order_account_agency_account
+        where deleted = 0
+        <if test="null != param.contractNo and param.contractNo != ''">
+            and contract_no = #{param.contractNo}
+        </if>
+        <if test="null != param.createUser">
+            and create_user = #{param.createUser}
+        </if>
+        <if test="null != param.serviceBeginDate">
+            and service_begin_date <![CDATA[ >= ]]> #{param.serviceBeginDate}
+        </if>
+        <if test="null != param.serviceEndDate">
+            and service_end_date <![CDATA[ <= ]]> #{param.serviceEndDate}
+        </if>
+        order by create_time desc
+    </select>
+</mapper>

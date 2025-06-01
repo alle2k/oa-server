@@ -15,6 +15,7 @@ import com.oa.common.utils.StringUtils;
 import com.oa.core.domain.ApprovalSubmissionRecord;
 import com.oa.core.domain.BusinessOrder;
 import com.oa.core.domain.OrderAccountAgency;
+import com.oa.core.enums.ApprovalSubmissionRecordStatusEnum;
 import com.oa.core.enums.AuditTypeEnum;
 import com.oa.core.mapper.master.OrderAccountAgencyMapper;
 import com.oa.core.model.dto.AccountAgencyQueryDto;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +61,16 @@ public class OrderAccountAgencyServiceImpl extends ServiceImpl<OrderAccountAgenc
         BusinessOrder businessOrder = businessOrderService.selectOneById(dto.getOrderId());
         if (dto.getAmount().compareTo(businessOrder.getFreeAmount()) > 0) {
             throw new ServiceException("代理记账费用不能超过合同订单剩余可用金额");
+        }
+        List<OrderAccountAgency> list = selectListByOrderIds(Collections.singleton(dto.getOrderId()));
+        if (!CollectionUtils.isEmpty(list)) {
+            if (list.stream().anyMatch(x -> ApprovalSubmissionRecordStatusEnum.AUDIT.getCode() == x.getApprovalStatus()
+                    || ApprovalSubmissionRecordStatusEnum.ROLLBACK.getCode() == x.getApprovalStatus())) {
+                throw new ServiceException("合同已有处于相同流程中的业务，请勿重复提交");
+            }
+            if (list.stream().anyMatch(x -> ApprovalSubmissionRecordStatusEnum.PASS.getCode() == x.getApprovalStatus())) {
+                throw new ServiceException("合同已有代理记账业务，请勿重复提交");
+            }
         }
         Long userId = SecurityUtils.getUserId();
         OrderAccountAgency entity = OrikaMapperUtils.map(dto, OrderAccountAgency.class);
@@ -147,6 +159,7 @@ public class OrderAccountAgencyServiceImpl extends ServiceImpl<OrderAccountAgenc
         entity.setAmount(dto.getAmount());
         entity.setServiceBeginDate(dto.getServiceBeginDate());
         entity.setServiceEndDate(dto.getServiceEndDate());
+        entity.setApprovalStatus(ApprovalSubmissionRecordStatusEnum.AUDIT.getCode());
         entity.setUpdateUser(userId);
         entity.setUpdateTime(date);
         updateById(entity);
@@ -172,6 +185,8 @@ public class OrderAccountAgencyServiceImpl extends ServiceImpl<OrderAccountAgenc
         agencyDetailVo.setUsedAmount(order.getUsedAmount());
         agencyDetailVo.setFreeAmount(order.getFreeAmount());
         approvalSubmissionRecordService.setCreateUserRelation(agencyDetailVo);
+        agencyDetailVo.setAnnexUrlList(StringUtils.str2List(order.getAnnexUrl()));
+        agencyDetailVo.setPaymentScreenshotList(StringUtils.str2List(order.getPaymentScreenshot()));
         return agencyDetailVo;
     }
 }

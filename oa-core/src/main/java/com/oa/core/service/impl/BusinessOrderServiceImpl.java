@@ -103,9 +103,17 @@ public class BusinessOrderServiceImpl extends ServiceImpl<BusinessOrderMapper, B
     @Override
     public TableDataInfo pageQuery(BusinessOrderQueryDto queryDto) {
         queryDto.setDataPermission(SecurityUtils.getLoginUser().getDataPermissionDto());
+        Set<Integer> bizTypeSet = new HashSet<>();
         if (!Objects.isNull(queryDto.getBizType())) {
+            bizTypeSet.add(queryDto.getBizType());
+        }
+        if (!Objects.isNull(queryDto.getMenuFlag())) {
+            bizTypeSet.add(BusinessOrderItemBizTypeEnum.ACCOUNT_AGENCY.getCode());
+            bizTypeSet.add(BusinessOrderItemBizTypeEnum.ACCOUNT_AGENCY_RENEW.getCode());
+        }
+        if (!CollectionUtils.isEmpty(bizTypeSet)) {
             List<BusinessOrderItem> itemList = businessOrderItemService.list(Wrappers.<BusinessOrderItem>lambdaQuery()
-                    .eq(BusinessOrderItem::getBizType, queryDto.getBizType())
+                    .in(BusinessOrderItem::getBizType, bizTypeSet)
                     .eq(BusinessOrderItem::getDeleted, DeletedEnum.UN_DELETE.getCode()));
             if (CollectionUtils.isEmpty(itemList)) {
                 return new TableDataInfo();

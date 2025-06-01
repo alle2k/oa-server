@@ -20,4 +20,10 @@ public interface IBusinessOrderRefService extends IService<BusinessOrderRef> {
                 .in(BusinessOrderRef::getOrderId, orderIds)
                 .eq(BusinessOrderRef::getDeleted, DeletedEnum.UN_DELETE.getCode()));
     }
+
+    default List<BusinessOrderRef> selectListByRefIds(Collection<Long> refIds) {
+        return list(Wrappers.<BusinessOrderRef>lambdaQuery()
+                .in(BusinessOrderRef::getRefId, refIds)
+                .eq(BusinessOrderRef::getDeleted, DeletedEnum.UN_DELETE.getCode()));
+    }
 }

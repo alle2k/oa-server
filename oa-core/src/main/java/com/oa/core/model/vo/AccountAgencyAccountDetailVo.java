@@ -2,24 +2,22 @@ package com.oa.core.model.vo;
 
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
-public class AccountAgencyDetailVo extends BizDetailBaseVo {
+public class AccountAgencyAccountDetailVo {
 
     @ApiModelProperty(value = "PK")
     private Long id;
 
-    @ApiModelProperty(value = "审批编号")
-    private String auditNo;
-
     @ApiModelProperty(value = "合同订单ID")
     private Long orderId;
+
+    @ApiModelProperty(value = "合同编号")
+    private String contractNo;
 
     @ApiModelProperty(value = "金额")
     private BigDecimal amount;
@@ -30,20 +28,8 @@ public class AccountAgencyDetailVo extends BizDetailBaseVo {
     @ApiModelProperty(value = "服务结束时间")
     private Date serviceEndDate;
 
-    @ApiModelProperty(value = "审批状态 0-审批中 1-审批通过 2-已拒绝 4-已撤销 5-已退回")
-    private Integer approvalStatus;
-
-    @ApiModelProperty(value = "审批通过时间")
-    private Date approvalTime;
-
     @ApiModelProperty(value = "创建时间")
     private Date createTime;
-
-    @ApiModelProperty(value = "审批编号")
-    private String orderAuditNo;
-
-    @ApiModelProperty(value = "付款时间")
-    private Date paymentTime;
 
     @ApiModelProperty(value = "甲方公司名称")
     private String companyName;
@@ -57,16 +43,12 @@ public class AccountAgencyDetailVo extends BizDetailBaseVo {
     @ApiModelProperty(value = "成交金额")
     private BigDecimal orderAmount;
 
-    /**
-     * 已使用金额
-     */
-    private BigDecimal usedAmount;
+    @ApiModelProperty(value = "付款时间")
+    private Date paymentTime;
 
-    /**
-     * 剩余可用金额
-     */
-    private BigDecimal freeAmount;
+    private String annexUrl;
 
+    private String paymentScreenshot;
 
     private List<String> annexUrlList;
 
@@ -74,4 +56,14 @@ public class AccountAgencyDetailVo extends BizDetailBaseVo {
      * 打款截图
      */
     private List<String> paymentScreenshotList;
+
+    /**
+     * 创建人
+     */
+    private Long createUser;
+
+    /**
+     * 用户姓名
+     */
+    private String createUserName;
 }

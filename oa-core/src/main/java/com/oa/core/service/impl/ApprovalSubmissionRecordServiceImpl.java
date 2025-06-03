@@ -130,7 +130,9 @@ public class ApprovalSubmissionRecordServiceImpl extends ServiceImpl<ApprovalSub
             return result;
         }
         Set<Long> userIdSet = candidates.stream().map(x -> ((AuditCandidateDto) x).getUserId()).collect(Collectors.toSet());
-        result.setCurrentAuditUserList(OrikaMapperUtils.mapList(sysUserService.listByIds(userIdSet), SysUser.class, UserShortVo.class));
+        result.setCurrentAuditUserList(sysUserService.listByIds(userIdSet).stream().map(x ->
+                new UserShortVo(x.getNickName(), x.getUserId(), x.getPhonenumber(), x.getUserName(), Integer.valueOf(x.getSex()), x.getAvatar(), x.getCreateTime(), Integer.valueOf(x.getStatus()))
+        ).collect(Collectors.toList()));
         return result;
     }
 

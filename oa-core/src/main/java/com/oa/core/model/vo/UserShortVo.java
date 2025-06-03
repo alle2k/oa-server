@@ -3,15 +3,19 @@ package com.oa.core.model.vo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Date;
 
+@NoArgsConstructor
 @ApiModel("用户信息")
 @Data
 public class UserShortVo {
 
     @ApiModelProperty(value = "id")
     private Long id;
+
+    private Long deptId;
 
     @ApiModelProperty("所属部门ID列表")
     private String deptIdList;
@@ -42,4 +46,15 @@ public class UserShortVo {
 
     @ApiModelProperty("创建时间")
     private Date createTime;
+
+    public UserShortVo(String name, Long id, String phone, String account, Integer gender, String avatar, Date createTime, Integer enableStatus) {
+        this.name = name;
+        this.id = id;
+        this.phone = phone;
+        this.account = account;
+        this.gender = gender;
+        this.avatar = avatar;
+        this.createTime = createTime;
+        this.enableStatus = enableStatus;
+    }
 }

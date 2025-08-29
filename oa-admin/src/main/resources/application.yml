@@ -1,11 +1,11 @@
 # 项目相关配置
 oa:
-  profile: E:/oa/uploadPath
+  profile: ../uploadPath
   # 获取ip地址开关
   addressEnabled: false
   # 验证码类型 math 数字计算 char 字符验证
   captchaType: math
-  bpmnPath: C:\Users\battl\Desktop
+  bpmnPath: ../bpmn
 
 # 开发环境配置
 server:
@@ -67,7 +67,7 @@ spring:
   # redis 配置
   redis:
     # 地址
-    host: zhaokai.xyz
+    host: 1.116.239.220
     # 端口，默认为6379
     port: 6379
     # 数据库索引
@@ -92,15 +92,15 @@ spring:
     druid:
       # 主库数据源
       master:
-        url: jdbc:mysql://zhaokai.xyz:3306/oa_core?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+        url: jdbc:mysql://1.116.239.220:3306/oa_core?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
         username: root
-        password: 7a14b92569085afd
+        password: 2c08b4082fe15064
       # 从库数据源
       flowable:
         # 从数据源开关/默认关闭
-        url: jdbc:mysql://zhaokai.xyz:3306/oa_flowable?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&nullCatalogMeansCurrent=true
+        url: jdbc:mysql://1.116.239.220:3306/oa_flowable?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&nullCatalogMeansCurrent=true
         username: root
-        password: 7a14b92569085afd
+        password: 2c08b4082fe15064
       # 初始连接数
       initialSize: 5
       # 最小连接池数量
@@ -205,4 +205,4 @@ recaptcha:
 
 coze:
   clientId: 1128122243349
-  publicKey: a2dt0UBzJRdIOw97XlW15yryTSX3AnUmz59JTDKBlQ0
+  publicKey: -L1p8hx5ywK_yD-oeS5AG-6ZIzHb8c39AesWvG3WCgo
